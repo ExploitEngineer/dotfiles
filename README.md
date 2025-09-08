@@ -9,8 +9,6 @@ This repo contains my full **\~/.config** setup for **Arch Linux + Hyprland**, a
 
 ---
 
----
-
 ## 🖼️ Setup Preview
 
 Here's a quick look at my **Arch Linux + Hyprland** setup:
