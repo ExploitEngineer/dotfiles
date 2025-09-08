@@ -1,6 +1,6 @@
 # Dotfiles — ExploitEngineer
 
-![Arch Linux + Hyprland](https://img.shields.io/badge/Arch%20Linux-Hyprland-blue?style=flat-square\&logo=arch-linux)
+![Arch Linux + Hyprland](https://img.shields.io/badge/Arch%20Linux-Hyprland-blue?style=flat-square&logo=arch-linux)
 ![Status](https://img.shields.io/badge/status-active-success?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
@@ -9,14 +9,26 @@ This repo contains my full **\~/.config** setup for **Arch Linux + Hyprland**, a
 
 ---
 
+---
+
+## 🖼️ Setup Preview
+
+Here's a quick look at my **Arch Linux + Hyprland** setup:
+
+<p align="center">
+  <img src="assets/my-arch-setup.jpeg" alt="Arch Linux Hyprland Setup" width="800" />
+</p>
+
+---
+
 ## 📦 Features
 
-* Organized `~/.config` structure
-* One-command installation via GNU **stow**
-* Automatic **backup** of existing configs
-* Supports **partial installs** for specific configs
-* Fallback script using **rsync** if stow is unavailable
-* Easy **uninstall** of symlinks
+- Organized `~/.config` structure
+- One-command installation via GNU **stow**
+- Automatic **backup** of existing configs
+- Supports **partial installs** for specific configs
+- Fallback script using **rsync** if stow is unavailable
+- Easy **uninstall** of symlinks
 
 ---
 
@@ -69,8 +81,8 @@ sudo pacman -S stow
 
 This will:
 
-* Automatically back up existing configs to `~/.dotfiles-backup/<timestamp>`
-* Symlink everything from `~/dotfiles/.config/` → `~/.config/`
+- Automatically back up existing configs to `~/.dotfiles-backup/<timestamp>`
+- Symlink everything from `~/dotfiles/.config/` → `~/.config/`
 
 #### **2.3 Install only specific configs**
 
@@ -92,8 +104,8 @@ If you don't want symlinks and prefer direct copying:
 
 This will:
 
-* Copy everything from `.config/` into `~/.config/`
-* Backup any conflicting configs into `~/.dotfiles-backup/<timestamp>`
+- Copy everything from `.config/` into `~/.config/`
+- Backup any conflicting configs into `~/.dotfiles-backup/<timestamp>`
 
 ---
 
