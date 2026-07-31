@@ -49,6 +49,28 @@ hl.bind("F3", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -d"),
 hl.bind("F4", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -i"),
 	{description = "[Hardware Controls|Brightness] increase brightness (fn+F4)", repeating = true})
 
+-- Fullscreen and pin, restored to their pre-Lua positions.
+-- The Lua migration moved fullscreen from SUPER+F to SUPER+F11 and promoted pin
+-- from SUPER+SHIFT+F to SUPER+F. SUPER+F11 is unreachable on this laptop: with
+-- HP Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the
+-- binding never fires and the keypress kills wifi instead.
+-- Later bindings win, so these override HyDE's.
+local cycle_fullscreen = function()
+	local active_window = assert(hl.get_active_window(), "No active window to toggle fullscreen")
+	local current_state = tonumber(active_window.fullscreen) or 0
+	local next_state = (current_state + 1) % 3
+	hl.dispatch(hl.dsp.window.fullscreen_state({
+		internal = next_state,
+		client = next_state,
+		window = active_window,
+	}))
+end
+
+hl.bind("SUPER + F", cycle_fullscreen,
+	{description = "[Window Management] cycle fullscreen"})
+hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd(hyde.sh.window.pin()),
+	{description = "[Window Management] toggle pin"})
+
 -- Personal binds recovered from the pre-Lua ~/.config/hypr/keybindings.conf,
 -- which HyDE stopped reading when the update moved to Lua mode.
 -- HyDE ships only SUPER+CTRL+Left/Right for this; these are the vim-key variants.

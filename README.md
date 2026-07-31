@@ -3,7 +3,7 @@
 Personal configuration for an Arch Linux and Hyprland desktop running the [HyDE](https://github.com/HyDE-Project/HyDE) framework.
 
 This repository holds only the files that differ from HyDE's shipped defaults.
-Anything byte-identical to upstream is deliberately left out, so what remains is the actual customisation rather than a copy of someone else's project.
+Anything byte-identical to upstream is left out, so what remains is the actual customisation rather than a copy of HyDE.
 
 ## System
 
@@ -13,28 +13,31 @@ Anything byte-identical to upstream is deliberately left out, so what remains is
 | Hardware | HP ZBook Studio x360 G5 |
 | Compositor | Hyprland 0.56.0 |
 | Framework | HyDE, Lua configuration mode |
-| Shell | zsh with powerlevel10k |
+| Shell | zsh |
 | Bar | waybar |
 | Launcher | rofi |
 | Notifications | dunst |
-| Lock and idle | hyprlock, hypridle |
 
 ## Layout
 
 Packages are [GNU Stow](https://www.gnu.org/software/stow/) directories.
-Each one mirrors the path it targets under `$HOME`, which means a package can be installed or removed on its own.
+Each mirrors the path it targets under `$HOME`, so a package can be installed or removed on its own.
 
 ```
 dotfiles/
-├── hypr/       .config/hypr        Hyprland, hyprlock, hyprsunset, pyprland
+├── hypr/       .config/hypr        hyprland.lua, hyprlock, hyprsunset, pyprland
 ├── desktop/    .config/waybar      bar layout and user styling
-├── terminal/   .config/tmux        terminal multiplexer
-├── shell/      .zshrc .bashrc      zsh, bash, fish, login profiles
+├── terminal/   .config/tmux        tmux
+├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
 ├── theme/      gtk, qt, xsettings  toolkit theming
-├── cli/        btop cava htop ...  terminal tools
+├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
-└── xdg/        mimeapps.list       default application handlers
+├── xdg/        mimeapps.list       default application handlers
+└── patches/                        fixes for HyDE-owned program files
 ```
+
+Not every configured program appears here.
+kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wallbash output, so there is nothing of mine to track.
 
 ## Install
 
@@ -61,39 +64,21 @@ Remove the symlinks again, leaving this repository untouched:
 ./uninstall.sh
 ```
 
-## What is not tracked, and why
+## Generated files are not tracked
 
-Nothing here is curated by accident.
-Files are copied in by an explicit allowlist, and `.gitignore` is a second line of defence so that a careless `git add -A` cannot publish a credential.
+HyDE repaints a lot of configuration from the active wallpaper through wallbash.
+Tracking that output would produce a diff on every theme change and would be overwritten on restore anyway.
 
-**Credentials and keys.**
-`.ssh`, `.gnupg`, `.docker`, `.npmrc`, `.mcp-auth`, `.claude.json`, and anything matching a private key or token pattern.
-
-**Tools that store API keys.**
-`gh`, `nuclei`, `subfinder`, `uncover`, `amass`, `katana`, `ffuf`, `feroxbuster`, `wakatime`, `msf4`, and Burp Suite.
-Several of these hold live provider keys, and the rest will once they are configured.
-
-**Saved connections and passwords.**
-`remmina`, `beekeeper-studio`, `MongoDB Compass`, `qBittorrent`, and `tigervnc`.
-
-**Browser profiles.**
-Cookies and saved passwords live in these directories, so none of them are tracked.
-
-**Shell and tool history.**
-`.zsh_history`, `fish_history`, `htop_history`, `.viminfo`, `.netrwhist`, and similar.
-
-**Generated output.**
-HyDE regenerates a large amount of configuration from the active wallpaper through wallbash.
-Tracking it would produce a diff on every theme change and would overwrite itself on restore.
-That covers `.config/hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum`, and `vim`, plus compiled shader and zsh completion caches.
+Excluded for that reason: `hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, and the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum` and `vim`.
+Compiled shader and zsh completion caches are excluded too.
 
 ## Machine-specific notes
 
-These are fixes for this particular laptop, kept here so a future restore does not have to rediscover them.
-All of them live in `hypr/.config/hypr/hyprland.lua`.
+Fixes for this particular laptop, kept so a future restore does not have to rediscover them.
+All live in `hypr/.config/hypr/hyprland.lua`.
 
 **Display scale.**
-Hyprland's built-in default is `,preferred,auto,auto`, and `auto` resolves to a scale of 1.5 on this panel, which reduces a 1920x1080 display to a 1280x720 logical desktop.
+Hyprland's built-in default is `,preferred,auto,auto`, and `auto` resolves to scale 1.5 on this panel, reducing a 1920x1080 display to a 1280x720 logical desktop.
 Scale is pinned to 1.0.
 `nwg-displays` writes `monitors.lua`, but nothing in HyDE's Lua chain requires that file, so `hyprland.lua` loads it explicitly and falls back to a known-good rule if it is missing.
 
@@ -103,22 +88,26 @@ On this keyboard the embedded numpad overlay rides on numlock, which turns `u i 
 It is forced off.
 
 **Brightness keys.**
-This machine never emits `XF86MonBrightnessUp` or `XF86MonBrightnessDown`.
-Sweeping the whole function row produces only volume and mic-mute keysyms, so HyDE's stock hardware bindings can never fire.
-Brightness is bound to `SUPER + SHIFT + Up` and `SUPER + SHIFT + Down`, and additionally to bare `F3` and `F4`, which is what the function row sends while HP Action Keys mode is active.
+This machine never emits `XF86MonBrightnessUp` or `XF86MonBrightnessDown`, so HyDE's stock hardware bindings cannot fire.
+Sweeping the function row produces only volume and mic-mute keysyms.
+Brightness is bound to `SUPER + SHIFT + Up` and `SUPER + SHIFT + Down`, and to bare `F3` and `F4`, which is what `fn`+`F3` and `fn`+`F4` send while HP Action Keys mode is active.
+
+**Fullscreen and pin.**
+The Lua migration moved fullscreen from `SUPER + F` to `SUPER + F11`, and promoted pin from `SUPER + SHIFT + F` to `SUPER + F`.
+`SUPER + F11` is unreachable here: with Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the binding never fires and the keypress disables wifi instead.
+Both are restored to their previous positions.
 
 **Blue light filter.**
-HyDE ships a `blue-light-filter` screen shader and enables `hyprsunset`.
-Together they tint the display noticeably.
+HyDE ships a `blue-light-filter` screen shader and enables `hyprsunset`, which together tint the display.
 The shader is set to `disable` and hyprsunset is left at a neutral 6500K.
 
 ## Patches
 
-`patches/` holds fixes for files that HyDE installs and owns under `~/.local/lib/hyde`.
+`patches/` holds fixes for files HyDE installs and owns under `~/.local/lib/hyde`.
 Those are program files rather than configuration, so they are not stow packages, and HyDE overwrites them on update.
-Reapply them after an update with `patch -p1 --forward`, which is a no-op if the fix is already present.
+Reapply with `patch -p1 --forward`, which is a no-op if the fix is already present.
 
-See [patches/README.md](patches/README.md) for details.
+See [patches/README.md](patches/README.md).
 Currently one patch, restoring the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
 
 ## Legacy configuration files
@@ -126,19 +115,15 @@ Currently one patch, restoring the `SUPER + /` keybindings hint menu, which brok
 A HyDE update moved the framework from `.conf` files to a Lua configuration chain.
 `~/.config/hypr/hyprland.conf` is no longer read, which silently orphaned every file it used to source.
 
-The affected files are still tracked here as a record, because they contain personal customisation that has not been ported yet:
+These are still tracked as a record, because they hold customisation that has not been ported:
 
 | File | Status |
 |---|---|
-| `keybindings.conf` | inert, roughly 116 personal bindings awaiting port |
+| `keybindings.conf` | inert, 116 bind lines |
 | `windowrules.conf` | inert |
 | `userprefs.conf` | inert, blur and touchpad settings |
 | `monitors.conf` | superseded by `monitors.lua` |
-| `workflows.conf`, `workspaces.conf` | inert |
+| `workflows.conf` | inert |
 
 Active configuration lives in `hyprland.lua`.
-Bindings ported so far include the group navigation pair `SUPER + CTRL + H` and `SUPER + CTRL + L`.
-
-## Licence
-
-Configuration files, use freely.
+Ported so far: `SUPER + CTRL + H` and `SUPER + CTRL + L` for group navigation, plus the fullscreen and pin bindings above.
