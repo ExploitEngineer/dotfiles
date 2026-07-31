@@ -130,5 +130,11 @@ Compared against the shipped default at `~/.local/share/hyde/keybindings.conf` i
 The rest of the textual diff is HyDE modernising its own commands from `$scrPath/foo.sh` to `hyde-shell foo`.
 So the bindings that changed across the update are upstream churn, not lost personal configuration.
 
-Active configuration lives in `hyprland.lua`.
-Restored there: `SUPER + CTRL + H` and `SUPER + CTRL + L` for group navigation, the fullscreen and pin pair, and bare `F3` and `F4` for brightness, which was HyDE's own default before the Lua migration dropped it.
+Active configuration lives in `hyprland.lua`, which loads `keybindings.lua` last so it overrides HyDE's defaults.
+
+`keybindings.lua` restores the pre-migration keyboard layout.
+Only the bindings that actually changed are listed there, 27 of them; the remaining ~80 already match HyDE's current defaults and are left alone.
+Verified against the old config: no binding is missing, and the handful that still report a difference differ only in their description text, not in the command they run.
+
+Two old commands no longer exist upstream and were remapped.
+`$scrPath/dontkillsteam.sh` became `hl.dsp.window.close()`, and `wbarconfgen` became `hyde-shell waybar -n` and `-p`.

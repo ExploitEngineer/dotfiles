@@ -51,10 +51,11 @@ hl.bind("F4", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -i"),
 -- HP Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the
 -- binding never fires and the keypress kills wifi instead.
 -- Later bindings win, so these override HyDE's.
-local cycle_fullscreen = function()
+-- Two-state toggle, matching the old `fullscreen` dispatcher. HyDE's Lua
+-- version cycles through three states, which behaves differently.
+local toggle_fullscreen = function()
 	local active_window = assert(hl.get_active_window(), "No active window to toggle fullscreen")
-	local current_state = tonumber(active_window.fullscreen) or 0
-	local next_state = (current_state + 1) % 3
+	local next_state = (tonumber(active_window.fullscreen) or 0) == 0 and 1 or 0
 	hl.dispatch(hl.dsp.window.fullscreen_state({
 		internal = next_state,
 		client = next_state,
@@ -62,8 +63,8 @@ local cycle_fullscreen = function()
 	}))
 end
 
-hl.bind("SUPER + F", cycle_fullscreen,
-	{description = "[Window Management] cycle fullscreen"})
+hl.bind("SUPER + F", toggle_fullscreen,
+	{description = "[Window Management] toggle fullscreen"})
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd(hyde.sh.window.pin()),
 	{description = "[Window Management] toggle pin"})
 
@@ -74,3 +75,6 @@ hl.bind("SUPER + CTRL + H", hl.dsp.group.prev(),
 	{description = "[Window Management|Group Navigation] change active group backwards"})
 hl.bind("SUPER + CTRL + L", hl.dsp.group.next(),
 	{description = "[Window Management|Group Navigation] change active group forwards"})
+
+-- The rest of the pre-Lua keybinding layout. Loaded last so it wins.
+require("keybindings")
