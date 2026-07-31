@@ -1,0 +1,18 @@
+[Default Applications]
+inode/directory=org.kde.dolphin.desktop
+text/html=brave-browser-beta.desktop
+x-scheme-handler/http=brave-browser-beta.desktop
+x-scheme-handler/https=brave-browser-beta.desktop
+x-scheme-handler/about=brave-browser-beta.desktop
+x-scheme-handler/unknown=brave-browser-beta.desktop
+x-scheme-handler/obsidian=obsidian.desktop
+x-scheme-handler/mailto=brave-browser-beta.desktop
+application/x-extension-burp=install4j_53kxwg-BurpSuite.desktop
+x-scheme-handler/burp=install4j_53kxwg-BurpSuite.desktop
+x-scheme-handler/postman=Postman.desktop
+application/pdf=org.gnome.Papers.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/claude=claude.desktop
+
+[Added Associations]
+application/pdf=org.gnome.Papers.desktop;

@@ -1,0 +1,7 @@
+[user]
+	name = ExploitEngineer
+	email = abdulrafayofficial.work@gmail.com
+[init]
+	defaultBranch = main
+[core]
+	editor = nvim
