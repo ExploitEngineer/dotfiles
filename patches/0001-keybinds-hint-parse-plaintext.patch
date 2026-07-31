@@ -1,0 +1,97 @@
+--- a/.local/lib/hyde/keybinds/hint-hyprland.py
++++ b/.local/lib/hyde/keybinds/hint-hyprland.py
+@@ -7,28 +7,73 @@
+ import time
+ 
+ 
++# Local fix for Hyprland 0.56: `hyprctl binds -j` emits invalid JSON. Values are
++# shifted into the wrong keys ("modmask": true, "submap": "64") and strings are
++# written unquoted ("keycode": T,), so json.loads() always raises. The previous
++# implementation caught JSONDecodeError inside `while True:` and slept, which
++# made this script hang forever and the SUPER+/ keybind hint silently fail.
++#
++# The plain-text `hyprctl binds` output is correct, so parse that instead.
++# Flags are encoded in the header token: bind + l(locked) e(repeat) r(release)
++# m(mouse) n(non-consuming) d(has description), e.g. "bindled".
+ def get_hyprctl_binds():
+-    while True:
+-        try:
+-            result = subprocess.run(
+-                ["hyprctl", "binds", "-j"], capture_output=True, text=True, check=True
+-            )
+-            while result.returncode != 0:
+-                print("Waiting for hyprctl command to succeed...")
+-                time.sleep(1)
+-                result = subprocess.run(
+-                    ["hyprctl", "binds", "-j"],
+-                    capture_output=True,
+-                    text=True,
+-                    check=True,
+-                )
+-            binds = json.loads(result.stdout)
+-            return binds
+-        except subprocess.CalledProcessError as e:
+-            print(f"Error executing hyprctl: {e}")
+-            return None
+-        except json.JSONDecodeError:
+-            time.sleep(1)
++    try:
++        result = subprocess.run(
++            ["hyprctl", "binds"], capture_output=True, text=True, check=True
++        )
++    except subprocess.CalledProcessError as e:
++        print(f"Error executing hyprctl: {e}")
++        return None
++
++    binds = []
++    current = None
++
++    for line in result.stdout.splitlines():
++        if not line.strip():
++            continue
++
++        if not line[0].isspace():
++            flags = line.strip()[len("bind") :]
++            current = {
++                "locked": "l" in flags,
++                "mouse": "m" in flags,
++                "release": "r" in flags,
++                "repeat": "e" in flags,
++                "non_consuming": "n" in flags,
++                "has_description": "d" in flags,
++                "modmask": 0,
++                "submap": "",
++                "submap_universal": "",
++                "key": "",
++                "keycode": 0,
++                "catch_all": False,
++                "description": "",
++                "dispatcher": "",
++                "arg": "",
++            }
++            binds.append(current)
++            continue
++
++        if current is None:
++            continue
++
++        field, sep, value = line.strip().partition(":")
++        if not sep:
++            continue
++        field = field.strip()
++        value = value.strip()
++
++        if field in ("modmask", "keycode"):
++            try:
++                current[field] = int(value)
++            except ValueError:
++                current[field] = 0
++        elif field == "catchall":
++            current["catch_all"] = value == "true"
++        elif field in ("submap", "key", "description", "dispatcher", "arg"):
++            current[field] = value
++
++    return binds
+ 
+ 
+ def parse_description(description):

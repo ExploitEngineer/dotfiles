@@ -112,6 +112,15 @@ HyDE ships a `blue-light-filter` screen shader and enables `hyprsunset`.
 Together they tint the display noticeably.
 The shader is set to `disable` and hyprsunset is left at a neutral 6500K.
 
+## Patches
+
+`patches/` holds fixes for files that HyDE installs and owns under `~/.local/lib/hyde`.
+Those are program files rather than configuration, so they are not stow packages, and HyDE overwrites them on update.
+Reapply them after an update with `patch -p1 --forward`, which is a no-op if the fix is already present.
+
+See [patches/README.md](patches/README.md) for details.
+Currently one patch, restoring the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
+
 ## Legacy configuration files
 
 A HyDE update moved the framework from `.conf` files to a Lua configuration chain.
