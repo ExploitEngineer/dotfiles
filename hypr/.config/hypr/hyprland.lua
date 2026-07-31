@@ -32,12 +32,8 @@ hl.config({
 
 -- Brightness. This laptop never emits XF86MonBrightnessUp/Down (verified by
 -- sweeping F1-F12: only volume and mic-mute keysyms arrive), so HyDE's stock
--- hardware binds can never fire. Bind to a combo that does reach the compositor.
-hl.bind("SUPER + SHIFT + Up", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -i"),
-	{description = "[Hardware Controls|Brightness] increase brightness", repeating = true})
-hl.bind("SUPER + SHIFT + Down", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -d"),
-	{description = "[Hardware Controls|Brightness] decrease brightness", repeating = true})
-
+-- hardware binds can never fire.
+--
 -- `fn` is consumed by the embedded controller and never reaches Hyprland, so it
 -- cannot be bound directly. The function row is in HP "Action Keys" mode, which
 -- means bare F3 emits XF86AudioMicMute while fn+F3 emits the *literal* F3
