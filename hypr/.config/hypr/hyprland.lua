@@ -78,3 +78,7 @@ hl.bind("SUPER + CTRL + L", hl.dsp.group.next(),
 
 -- The rest of the pre-Lua keybinding layout. Loaded last so it wins.
 require("keybindings")
+
+-- Blur, opacity and touchpad preferences. Loaded after the theme, so it
+-- overrides per-theme values on every theme switch.
+require("userprefs")
