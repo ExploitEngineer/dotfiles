@@ -115,7 +115,7 @@ Currently one patch, restoring the `SUPER + /` keybindings hint menu, which brok
 A HyDE update moved the framework from `.conf` files to a Lua configuration chain.
 `~/.config/hypr/hyprland.conf` is no longer read, which silently orphaned every file it used to source.
 
-These are still tracked as a record, because they hold customisation that has not been ported:
+These are still tracked as a record of the pre-migration state:
 
 | File | Status |
 |---|---|
@@ -125,5 +125,10 @@ These are still tracked as a record, because they hold customisation that has no
 | `monitors.conf` | superseded by `monitors.lua` |
 | `workflows.conf` | inert |
 
+`keybindings.conf` is worth a note: it is HyDE's own default template from an older release rather than a personalised file.
+Compared against the shipped default at `~/.local/share/hyde/keybindings.conf` it is 116 lines against 116, and only six bindings differ by intent.
+The rest of the textual diff is HyDE modernising its own commands from `$scrPath/foo.sh` to `hyde-shell foo`.
+So the bindings that changed across the update are upstream churn, not lost personal configuration.
+
 Active configuration lives in `hyprland.lua`.
-Ported so far: `SUPER + CTRL + H` and `SUPER + CTRL + L` for group navigation, plus the fullscreen and pin bindings above.
+Restored there: `SUPER + CTRL + H` and `SUPER + CTRL + L` for group navigation, the fullscreen and pin pair, and bare `F3` and `F4` for brightness, which was HyDE's own default before the Lua migration dropped it.
