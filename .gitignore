@@ -1,9 +1,0 @@
-# Ignore backups
-*-backup-back-up_*
-*.old
-*.bak
-
-# Ignore caches
-.cache/
-logs/
-sessions/
