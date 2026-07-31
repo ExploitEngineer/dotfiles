@@ -38,10 +38,11 @@ hl.bind("SUPER + SHIFT + Up", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -i")
 hl.bind("SUPER + SHIFT + Down", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -d"),
 	{description = "[Hardware Controls|Brightness] decrease brightness", repeating = true})
 
--- TRIAL: `fn` is consumed by the embedded controller and never reaches Hyprland,
--- so it cannot be bound. But plain F3 already emits XF86AudioMicMute, which means
--- the function row is in HP "Action Keys" mode - and fn+F3 should therefore send
--- the *literal* F3 keysym. Bind those and fn+F3 / fn+F4 behave as brightness.
+-- `fn` is consumed by the embedded controller and never reaches Hyprland, so it
+-- cannot be bound directly. The function row is in HP "Action Keys" mode, which
+-- means bare F3 emits XF86AudioMicMute while fn+F3 emits the *literal* F3
+-- keysym. Binding literal F3/F4 therefore makes fn+F3 / fn+F4 control
+-- brightness. Verified working on this machine.
 -- Cost: this shadows bare F3/F4 in every application (browser find-next, etc.).
 hl.bind("F3", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -d"),
 	{description = "[Hardware Controls|Brightness] decrease brightness (fn+F3)", repeating = true})
