@@ -1,0 +1,12 @@
+# Keep GitHub's language bar meaningful: this is a configuration repository,
+# not a CSS or shader project.
+*.css      linguist-vendored
+*.frag     linguist-vendored
+*.vert     linguist-vendored
+*.rasi     linguist-detectable=false
+*.conf     linguist-detectable=false
+
+# Normalise line endings for text configuration.
+* text=auto eol=lf
+*.png binary
+*.svg binary

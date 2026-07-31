@@ -1,0 +1,89 @@
+# This repository is curated by allowlist: files are copied in deliberately.
+# The rules below are a second line of defence, so that a careless `git add -A`
+# can never publish a credential or a machine-local cache.
+
+# ---- credentials and keys -------------------------------------------------
+.ssh/
+.gnupg/
+.docker/
+.aws/
+.kube/
+.netrc
+.npmrc
+.pypirc
+.git-credentials
+.mcp-auth/
+.claude.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+known_hosts
+*_token
+*.token
+credentials
+secrets.*
+
+# ---- tools that store API keys --------------------------------------------
+.config/gh/
+.config/nuclei/
+.config/subfinder/
+.config/uncover/
+.config/amass/
+.config/katana/
+.config/ffuf/
+.config/feroxbuster/
+.wakatime.cfg
+.msf4/
+.BurpSuite/
+
+# ---- tools that store saved connections / passwords -----------------------
+.config/remmina/
+.config/beekeeper-studio/
+.config/MongoDB Compass/
+.config/qBittorrent/
+.config/tigervnc/
+
+# ---- browser profiles (cookies, saved passwords) --------------------------
+.config/BraveSoftware/
+.config/chromium/
+.config/google-chrome*/
+.config/microsoft-edge/
+.config/mozilla/
+.config/opera/
+.config/vivaldi/
+.pki/
+
+# ---- shell and tool history -----------------------------------------------
+.zsh_history
+.bash_history
+.python_history
+.node_repl_history
+.mariadb_history
+fish_history
+.viminfo
+.netrwhist
+.wget-hsts
+.lesshst
+
+# ---- generated caches and compiled artifacts ------------------------------
+.zcompdump*
+*.zwc
+*.pyc
+__pycache__/
+*.log
+*.swp
+*.tmp
+
+# ---- HyDE writes these per theme; they churn on every wallpaper change ----
+.config/hypr/themes/
+.config/hypr/shaders/.compiled.cache.glsl
+.config/waybar/includes/
+.config/waybar/modules/
+
+# ---- OS noise -------------------------------------------------------------
+.DS_Store
+Thumbs.db
