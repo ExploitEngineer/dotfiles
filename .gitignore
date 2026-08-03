@@ -84,6 +84,13 @@ __pycache__/
 .config/waybar/includes/
 .config/waybar/modules/
 
+# ---- rewritten by HyDE on every theme switch (theme/cursor/icon/font names) --
+.config/gtk-3.0/settings.ini
+.gtkrc-2.0
+.config/xsettingsd/xsettingsd.conf
+.config/qt5ct/qt5ct.conf
+.config/qt6ct/qt6ct.conf
+
 # ---- OS noise -------------------------------------------------------------
 .DS_Store
 Thumbs.db

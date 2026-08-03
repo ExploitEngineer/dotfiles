@@ -334,11 +334,11 @@
 
  gradient = 1
  gradient_count = 8
- gradient_color_1 = '#523529'
- gradient_color_2 = '#6B493A'
- gradient_color_3 = '#7D5F4B'
- gradient_color_4 = '#8F6E57'
- gradient_color_5 = '#A38765'
- gradient_color_6 = '#C2A17A'
- gradient_color_7 = '#E6D29A'
- gradient_color_8 = '#F0DDAA'
+ gradient_color_1 = '#1A1A1A'
+ gradient_color_2 = '#2B2B2B'
+ gradient_color_3 = '#3D3D3D'
+ gradient_color_4 = '#636363'
+ gradient_color_5 = '#828282'
+ gradient_color_6 = '#949494'
+ gradient_color_7 = '#B8B8B8'
+ gradient_color_8 = '#D6D6D6'
