@@ -33,6 +33,7 @@ dotfiles/
 ├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default application handlers
+├── bin/        .local/bin          capture scripts: rec-toggle, ig-reel, ig-clean
 └── patches/                        fixes for HyDE-owned program files
 ```
 
