@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CAPTURE_DIR="$HOME/capture"
+PIDFILE="/tmp/rec-toggle.pid"
+mkdir -p "$CAPTURE_DIR"
+
+notify() { command -v notify-send >/dev/null 2>&1 && notify-send "rec" "$1" || echo "$1"; }
+
+# already recording? stop it.
+if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+  kill -INT "$(cat "$PIDFILE")"
+  rm -f "$PIDFILE"
+  notify "stopped"
+  exit 0
+fi
+
+# stale pidfile left by a crashed or force-killed run
+rm -f "$PIDFILE"
+
+OUT="$CAPTURE_DIR/$(date +%F-%H%M%S).mkv"
+
+# Encoder settings tuned for terminal text, which is the pathological case for
+# hardware encoders: high-contrast glyph edges pick up mosquito noise.
+#
+# NOTE ON RESOLUTION: nothing here sets a resolution. The capture is always the
+# native pixel size of the region you drag with slurp. To get a bigger recording,
+# drag a bigger region; this screen is 1920x1080 at scale 1.0. crf is a quality
+# dial, not a size: 0 is mathematically lossless, 51 is worst.
+#
+#   crf=0            fully lossless. Measured on this machine at full 1920x1080,
+#                    60fps, 4:4:4 it costs about 11 MB/min, because terminal
+#                    content is mostly static and compresses very well. There is
+#                    no quality reason to use anything higher.
+#   preset=veryfast  with lossless, preset changes only file size and CPU load,
+#                    never quality. veryfast guarantees the encoder keeps up at
+#                    60fps so no frames are dropped, which would cost real quality
+#   -x yuv444p       no chroma subsampling. Biggest single win for coloured text;
+#                    yuv420p discards 3/4 of the colour and fringes glyph edges
+#   -r 60 -D         constant 60fps regardless of screen damage, so scrolling is
+#                    smooth and still has real motion after ig-reel's 2x speedup
+#   .mkv             some players choke on yuv444p inside mp4; mkv does not care,
+#                    and ig-reel outputs yuv420p at the end anyway
+#
+# NVENC is deliberately unused. Measured on this machine (Quadro P1000, Pascal,
+# 6th-gen NVENC, and the only GPU present since the iGPU is disabled): it encodes
+# this content at yuv420p, so its only effect would be discarding colour.
+
+if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]; then
+  # slurp exits non-zero when cancelled with Esc. Without this guard `set -e`
+  # killed the script before any notification, so a cancel was indistinguishable
+  # from a crash.
+  GEO="$(slurp)" || { notify "cancelled"; exit 0; }
+  [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
+
+  wf-recorder -g "$GEO" \
+    -c libx264 -p crf=0 -p preset=veryfast \
+    -x yuv444p -r 60 -D \
+    -f "$OUT" &
+else
+  GEOM="$(slop -f '%x %y %w %h')" || { notify "cancelled"; exit 0; }
+  read -r X Y W H <<<"$GEOM"
+  W=$(( W - W % 2 )); H=$(( H - H % 2 ))   # x264 needs even dimensions
+  ffmpeg -nostdin -loglevel error -f x11grab -framerate 60 \
+    -video_size "${W}x${H}" -i "${DISPLAY}+${X},${Y}" \
+    -c:v libx264 -preset veryfast -crf 0 -pix_fmt yuv444p \
+    "$OUT" &
+fi
+
+echo $! > "$PIDFILE"
+notify "recording → $(basename "$OUT")"
