@@ -31,17 +31,34 @@ local function bind(keys, action, description, opts)
 	hl.bind(keys, action, opts)
 end
 
--- ── Scratchpad ──────────────────────────────────────────────────────────────
--- HyDE reassigned all three of these to screenshot actions. The screenshot
--- bindings are restored to their own keys further down, so nothing is lost.
-bind(M .. " + S", hl.dsp.workspace.toggle_special(),
+-- ── Scratchpad: deliberately NOT bound to the S keys ────────────────────────
+-- The pre-Lua config had SUPER+S / SUPER+SHIFT+S / SUPER+ALT+S on the special
+-- workspace, and restoring that here was wrong: those keys are used for
+-- screenshots in practice, and taking them over meant SUPER+S threw windows
+-- into a hidden workspace instead of capturing anything.
+--
+-- The S keys are left to HyDE, which binds them to snip / freeze-and-snip /
+-- print-monitor.
+--
+-- The scratchpad itself is still worth having a key for: without one, any window
+-- already sitting in the special workspace floats on top of every workspace with
+-- no way to dismiss it. SUPER+grave is free and is what HyDE's own commented-out
+-- example uses.
+bind(M .. " + grave", hl.dsp.workspace.toggle_special(),
 	"[Workspaces|Special workspace] toggle scratchpad")
-bind(M .. " + SHIFT + S", hl.dsp.window.move({workspace = "special"}),
-	"[Workspaces|Special workspace] move to scratchpad")
-bind(M .. " + ALT + S", hl.dsp.window.move({workspace = "special", follow = false}),
-	"[Workspaces|Special workspace] move to scratchpad (silent)")
+
+-- Deliberately putting a window into the stash. On grave rather than S, both
+-- because the S keys belong to screenshots and because grave is far harder to
+-- hit by accident, which is how windows previously ended up stranded in there.
+-- Moving a window back OUT needs no special bind: SUPER+SHIFT+<number> already
+-- moves the focused window to a numbered workspace, and works from inside the
+-- special workspace.
+bind(M .. " + SHIFT + grave", hl.dsp.window.move({workspace = "special"}),
+	"[Workspaces|Special workspace] move window to scratchpad")
 
 -- ── Screenshots ─────────────────────────────────────────────────────────────
+-- These duplicate HyDE's S-key screenshot bindings on the pre-Lua P keys.
+-- Both sets work; they are different keys, not competing bindings.
 bind(M .. " + P", hl.dsp.exec_cmd("hyde-shell screenshot s"),
 	"[Utilities|Screenshot] snip screen")
 bind(M .. " + CTRL + P", hl.dsp.exec_cmd("hyde-shell screenshot sf"),
