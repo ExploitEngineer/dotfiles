@@ -46,11 +46,49 @@ OUT="$CAPTURE_DIR/$(date +%F-%H%M%S).mkv"
 # 6th-gen NVENC, and the only GPU present since the iGPU is disabled): it encodes
 # this content at yuv420p, so its only effect would be discarding colour.
 
+# Capture size. With no argument you drag a region, which is fine for one-offs
+# but impossible to repeat exactly. A size argument gives an exact, centred
+# region instead, which matters because ig-reel targets 1080x1920: capture at
+# exactly 1080 wide and nothing is rescaled, capture the full 1920-wide screen
+# and everything is squashed to 0.56x, which is what makes terminal text
+# unreadable on a phone.
+#
+#   rec-toggle              drag a region
+#   rec-toggle 1080x1080     exact centred region, no rescaling downstream
+#   rec-toggle sharp         alias for 1080x1080
+#   rec-toggle tall          810x1080, fills more of the reel, 1.33x upscale
+#   rec-toggle full          whole screen (expect soft text in a reel)
+geometry_for() {
+  local spec="$1" sw sh w h
+  read -r sw sh < <(hyprctl monitors -j 2>/dev/null |
+    grep -oE '"width": *[0-9]+|"height": *[0-9]+' | grep -oE '[0-9]+' | head -2 | tr '\n' ' ')
+  sw=${sw:-1920}; sh=${sh:-1080}
+
+  case "$spec" in
+    sharp) w=1080; h=1080 ;;
+    tall)  w=810;  h=1080 ;;
+    full)  w=$sw;  h=$sh ;;
+    *x*)   w=${spec%x*}; h=${spec#*x} ;;
+    *)     return 1 ;;
+  esac
+
+  (( w > sw )) && w=$sw
+  (( h > sh )) && h=$sh
+  w=$(( w - w % 2 )); h=$(( h - h % 2 ))   # x264 needs even dimensions
+  printf '%d,%d %dx%d' $(( (sw - w) / 2 )) $(( (sh - h) / 2 )) "$w" "$h"
+}
+
+SPEC="${1:-}"
+
 if [[ "${XDG_SESSION_TYPE:-}" == "wayland" ]]; then
-  # slurp exits non-zero when cancelled with Esc. Without this guard `set -e`
-  # killed the script before any notification, so a cancel was indistinguishable
-  # from a crash.
-  GEO="$(slurp)" || { notify "cancelled"; exit 0; }
+  if [[ -n "$SPEC" ]]; then
+    GEO="$(geometry_for "$SPEC")" || { notify "bad size: $SPEC"; exit 1; }
+  else
+    # slurp exits non-zero when cancelled with Esc. Without this guard `set -e`
+    # killed the script before any notification, so a cancel was
+    # indistinguishable from a crash.
+    GEO="$(slurp)" || { notify "cancelled"; exit 0; }
+  fi
   [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
 
   wf-recorder -g "$GEO" \
