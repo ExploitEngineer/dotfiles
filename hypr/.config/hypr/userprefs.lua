@@ -41,14 +41,23 @@ local opacity = { active = 0.90, inactive = 0.75 }
 --
 -- The active theme name comes from hyde.config.ui.hyde_theme, which dynamic.lua
 -- populates from lua_state/ui.lua before hyprland.lua is loaded.
--- Currently empty on purpose. Red Stone was overridden here to size 10 /
--- passes 3, which made things worse: how much wallpaper shows through a window
--- is governed by the wallpaper's own brightness, not by the blur radius.
--- Red Stone's black-arch-binary.png sits at 3.3% lightness against Rosé Pine's
--- 24.3%, so there is nearly nothing to reveal, and a large blur additionally
--- smears its fine binary-digit detail into flat black. Change the wallpaper
--- instead of the blur.
-local per_theme = {}
+-- Red Stone needs more transparency than the rest, for two structural reasons:
+--
+--   1. Its window background is #0A0101, essentially pure black, against Rosé
+--      Pine's #191724. What you see is 0.9 * window_bg + 0.1 * blurred wallpaper,
+--      so a black background swallows the result.
+--   2. Its wallpapers are unusually dark. The brightest is 55.9% mean lightness
+--      but most sit under 15%, against Rosé Pine's 24.3%.
+--
+-- Lowering opacity is the only dial that raises the wallpaper's contribution.
+-- Blur radius does not: it decides how smeared that contribution is, not how
+-- much of it there is, and pushing size past ~6 destroys fine wallpaper detail.
+-- 0.65/0.58 was picked by eye against Red Stone's wallpaper. It is roughly the
+-- transparency floor for a terminal you actually read: much lower and text
+-- starts competing with the wallpaper behind it.
+local per_theme = {
+	["Red Stone"] = { active = 0.65, inactive = 0.58, size = 6, passes = 2 },
+}
 
 local theme = (hyde.config.ui or {}).hyde_theme
 for k, v in pairs(per_theme[theme] or {}) do
