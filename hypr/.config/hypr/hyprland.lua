@@ -53,9 +53,14 @@ hl.bind("F4", hl.dsp.exec_cmd("hyde-shell brightnesscontrol -i"),
 -- Later bindings win, so these override HyDE's.
 -- Two-state toggle, matching the old `fullscreen` dispatcher. HyDE's Lua
 -- version cycles through three states, which behaves differently.
+--
+-- State values are 0 = none, 1 = maximize, 2 = fullscreen. It must be 2, not 1:
+-- decoration:fullscreen_opacity (which HyDE sets to 1) only applies to real
+-- fullscreen, so state 1 leaves the window translucent and blurred. That breaks
+-- taking a clean screenshot of a fullscreen window.
 local toggle_fullscreen = function()
 	local active_window = assert(hl.get_active_window(), "No active window to toggle fullscreen")
-	local next_state = (tonumber(active_window.fullscreen) or 0) == 0 and 1 or 0
+	local next_state = (tonumber(active_window.fullscreen) or 0) == 0 and 2 or 0
 	hl.dispatch(hl.dsp.window.fullscreen_state({
 		internal = next_state,
 		client = next_state,
