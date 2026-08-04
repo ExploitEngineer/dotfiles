@@ -14,9 +14,20 @@
 
 local M = "SUPER"
 
+-- HyDE wraps hl.bind with a dedup that only replaces an existing binding when
+-- the *flag signature* matches as well as the key combo (see hyde/binds.lua).
+-- HyDE's screenshot binds carry `locked = true` while these do not, so the
+-- signatures differed, nothing was replaced, and both bindings stayed live:
+-- one press of SUPER+S fired the screenshot tool *and* the scratchpad toggle.
+--
+-- Unbinding explicitly first makes replacement unconditional, whatever flags
+-- either side uses.
+local normalize = (hyde.binds or {}).normalize
+
 local function bind(keys, action, description, opts)
 	opts = opts or {}
 	opts.description = description
+	pcall(hl.unbind, normalize and normalize(keys) or keys)
 	hl.bind(keys, action, opts)
 end
 
