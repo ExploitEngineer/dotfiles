@@ -14,6 +14,32 @@
 -- ~/.config/hypr/hyprland.conf when it moved to the Lua chain, which silently
 -- orphaned that file and every other .conf it used to source.
 
+-- Default blur, applied to every theme.
+local blur = {
+	enabled = true,
+	size = 4,
+	passes = 2,
+	new_optimizations = true,
+	ignore_opacity = true,
+	xray = false,
+}
+
+-- Per-theme blur strength. Because this file overrides whatever the theme set,
+-- editing a theme's own hypr.theme has no effect; the override has to happen
+-- here instead. `passes` drives most of the visible strength, `size` widens the
+-- sample radius.
+--
+-- The active theme name comes from hyde.config.ui.hyde_theme, which dynamic.lua
+-- populates from lua_state/ui.lua before hyprland.lua is loaded.
+local per_theme = {
+	["Red Stone"] = { size = 8, passes = 4 },
+}
+
+local theme = (hyde.config.ui or {}).hyde_theme
+for k, v in pairs(per_theme[theme] or {}) do
+	blur[k] = v
+end
+
 hl.config({
 	decoration = {
 		-- Opacity is the reason blur looked absent on some themes, not the blur
@@ -28,14 +54,7 @@ hl.config({
 		active_opacity = 0.90,
 		inactive_opacity = 0.75,
 
-		blur = {
-			enabled = true,
-			size = 4,
-			passes = 2,
-			new_optimizations = true,
-			ignore_opacity = true,
-			xray = false,
-		},
+		blur = blur,
 	},
 
 	input = {
