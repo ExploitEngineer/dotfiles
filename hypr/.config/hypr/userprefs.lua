@@ -24,20 +24,34 @@ local blur = {
 	xray = false,
 }
 
--- Per-theme blur strength. Because this file overrides whatever the theme set,
--- editing a theme's own hypr.theme has no effect; the override has to happen
--- here instead. `passes` drives most of the visible strength, `size` widens the
--- sample radius.
+-- Default window opacity. This, not the blur radius, is what decides whether
+-- blur is *visible*: at 0.90 only a tenth of the blurred backdrop shows through,
+-- so the window reads as solid however large the blur is.
+local opacity = { active = 0.90, inactive = 0.75 }
+
+-- Per-theme overrides. Because this file is applied after the theme, editing a
+-- theme's own hypr.theme has no effect; overrides have to happen here.
+--
+--   active/inactive  window opacity. LOWER = more of the blurred backdrop is
+--                    visible. This is the main dial for "more blur".
+--   size             blur sample radius; wider smear.
+--   passes           blur iterations. Raising this too far flattens the result
+--                    into a uniform wash that looks like no blur at all, so 3
+--                    is about the practical ceiling for a visible effect.
 --
 -- The active theme name comes from hyde.config.ui.hyde_theme, which dynamic.lua
 -- populates from lua_state/ui.lua before hyprland.lua is loaded.
 local per_theme = {
-	["Red Stone"] = { size = 8, passes = 4 },
+	["Red Stone"] = { active = 0.78, inactive = 0.62, size = 10, passes = 3 },
 }
 
 local theme = (hyde.config.ui or {}).hyde_theme
 for k, v in pairs(per_theme[theme] or {}) do
-	blur[k] = v
+	if k == "active" or k == "inactive" then
+		opacity[k] = v
+	else
+		blur[k] = v
+	end
 end
 
 hl.config({
@@ -48,11 +62,10 @@ hl.config({
 		-- blurred content behind it cannot be shown. Crimson-Blue sets both
 		-- opacities to 1 and xray = true, which removes it entirely.
 		--
-		-- These are HyDE's own defaults, pinned here so themes cannot raise them
-		-- back to 1. Remove these two lines if you would rather let each theme
-		-- decide.
-		active_opacity = 0.90,
-		inactive_opacity = 0.75,
+		-- Pinned here so themes cannot raise them back to 1. Remove these two
+		-- lines if you would rather let each theme decide.
+		active_opacity = opacity.active,
+		inactive_opacity = opacity.inactive,
 
 		blur = blur,
 	},
