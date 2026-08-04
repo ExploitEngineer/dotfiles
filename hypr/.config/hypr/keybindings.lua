@@ -56,6 +56,43 @@ bind(M .. " + grave", hl.dsp.workspace.toggle_special(),
 bind(M .. " + SHIFT + grave", hl.dsp.window.move({workspace = "special"}),
 	"[Workspaces|Special workspace] move window to scratchpad")
 
+-- Bulk variants. Hyprland has no "move every window" dispatcher, so these walk
+-- the window list and move each one. `follow = false` keeps focus put instead of
+-- chasing each window as it moves.
+local function is_special(w)
+	local n = w.workspace and w.workspace.name
+	return type(n) == "string" and n:match("^special") ~= nil
+end
+
+local function stash_all()
+	local ws = hl.get_active_workspace()
+	if not ws or is_special({workspace = ws}) then return end
+	for _, w in ipairs(hl.get_workspace_windows(ws) or {}) do
+		hl.dispatch(hl.dsp.window.move({workspace = "special", follow = false, window = w}))
+	end
+end
+
+local function unstash_all()
+	-- If the scratchpad itself is focused, the active workspace *is* the special
+	-- one, so fall back to the last normal workspace as the destination.
+	local ws = hl.get_active_workspace()
+	local target = ws and not is_special({workspace = ws}) and ws.id or nil
+	if not target then
+		local last = hl.get_last_workspace()
+		target = last and last.id or 1
+	end
+	for _, w in ipairs(hl.get_windows() or {}) do
+		if is_special(w) then
+			hl.dispatch(hl.dsp.window.move({workspace = target, follow = false, window = w}))
+		end
+	end
+end
+
+bind(M .. " + CTRL + grave", stash_all,
+	"[Workspaces|Special workspace] move ALL windows on this workspace to scratchpad")
+bind(M .. " + ALT + grave", unstash_all,
+	"[Workspaces|Special workspace] bring ALL scratchpad windows to this workspace")
+
 -- ── Screenshots ─────────────────────────────────────────────────────────────
 -- These duplicate HyDE's S-key screenshot bindings on the pre-Lua P keys.
 -- Both sets work; they are different keys, not competing bindings.
