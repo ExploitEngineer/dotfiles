@@ -167,18 +167,22 @@ bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 -- terminal is unaffected. Pinning matters because changing font size mid-take
 -- leaves a visible jump that cannot be edited out.
 --
--- Measured on this font: line height is about font_size * 1.57.
---   font 30 -> 47.8px line height, 21 rows   (too coarse, was the default)
---   font 21 -> 33.5px line height, 30 rows
---   font 20 -> 31.4px line height, 32 rows   <- chosen
--- Divide the line height you want by 1.57 to pick a size by eye.
+-- Measured in the actual 1012px recording window, not derived from a formula:
+--   font 20 -> 26 rows x 60 cols   (~37.5px line height)
+--   font 19 -> 28 rows x 64 cols
+--   font 18 -> 30 rows x 68 cols
+--   font 17 -> 32 rows x 68 cols   (~30.5px line height)  <- chosen
+--   font 16 -> 33 rows x 74 cols
+-- 32 rows is the density target; 30.5px line height is about Instagram caption
+-- size after the 1.038x upscale. Keep REC_FONT and REC_CELL in
+-- ~/.local/bin/rec in step with this, since `rec layout` uses them.
 --
 -- window_padding_width 18 keeps a small gap between the terminal border and the
 -- text, so the border stays visible inside the capture without text bleeding to
 -- the frame edge.
 bind(M .. " + CTRL + T",
-	hl.dsp.exec_cmd("kitty --class floatterm --override font_size=20 --override window_padding_width=18"),
-	"[Launcher|Apps] floating terminal for recording (1040px, 32 rows)")
+	hl.dsp.exec_cmd("kitty --class floatterm --override font_size=17 --override window_padding_width=18"),
+	"[Launcher|Apps] floating terminal for recording (1012px, 32 rows)")
 
 -- ── Screen recording ────────────────────────────────────────────────────────
 -- ~/.local/bin/rec wraps gpu-screen-recorder. A bare `rec` starts at 60fps and

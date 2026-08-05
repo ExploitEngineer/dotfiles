@@ -13,14 +13,13 @@
 #   rec mid          1040x780    4:3, middle ground
 #   rec full         1920x1040   whole usable screen, waybar excluded
 #
-# STACKED LAYOUTS  same 1040x1040 region as sharp; Hyprland does the tiling, so
-#                  arrange the stack yourself first. These print the per-window
-#                  height and row budget before recording.
-#   rec stack2       two windows stacked vertically, each 1040 wide
-#   rec stack3       three windows stacked vertically, each 1040 wide
+# MULTI-WINDOW
+#   rec layout       print how many rows each window gets when 1, 2 or 3 are
+#                    stacked in the sharp frame, and what the whole screen looks
+#                    like once downscaled into a reel. Prints only, never records.
 #
-#                  Vertical only. Side by side at 1080 output gives each window
-#                  ~520px, about 31 columns, which is unreadable.
+#                    Stack vertically, never side by side: at 1080 output width a
+#                    side-by-side pane is ~540px, about 32 columns.
 #
 # NAMED REGIONS   for framing a specific GUI panel and hitting it again later
 #   rec save <name>  drag a region with slurp and store it under <name>
@@ -56,6 +55,8 @@ REGION_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/rec"
 REGION_FILE="$REGION_DIR/regions"
 CAPTURE_W=1040          # fixed; see header
 DEFAULT_PRESET="sharp"
+REC_FONT=17            # keep in step with the launcher in keybindings.lua
+REC_CELL=30.5          # measured line height at REC_FONT, not a formula
 FPS=60
 
 notify() { command -v notify-send >/dev/null 2>&1 && notify-send "rec" "$1" || echo "$1"; }
@@ -104,7 +105,7 @@ init_geometry() {
 geometry_for() {
   local w h
   case "$1" in
-    sharp|stack2|stack3) w=$CAPTURE_W; h=1040 ;;
+    sharp) w=$CAPTURE_W; h=1040 ;;
     wide)  w=$CAPTURE_W; h=584  ;;   # 585 rounded to even
     mid)   w=$CAPTURE_W; h=780  ;;
     full)  w=$UW;        h=$UH  ;;
@@ -117,25 +118,31 @@ geometry_for() {
     $(( UX + (UW - w) / 2 )) $(( UY + (UH - h) / 2 ))
 }
 
-is_preset() { case "$1" in sharp|wide|mid|full|stack2|stack3) return 0 ;; *) return 1 ;; esac; }
+is_preset() { case "$1" in sharp|wide|mid|full) return 0 ;; *) return 1 ;; esac; }
 
-# stack2 / stack3 record the same 1040x1040 region as sharp. Hyprland does the
-# tiling; forcing a split direction from a script is fragile, so these just
-# print the per-window budget so the layout can be arranged by hand first.
+# `rec layout` prints how much room each window gets, so a multi-window shot can
+# be judged before recording rather than after. It never records.
 #
-# Budget: 1040 frame, minus 2x12px desktop margin, minus 2px border per window
-# edge, minus gaps_in between them, divided by N. Rows use the measured line
-# height of font_size * 1.57, minus 2 x window_padding_width 18.
-stack_hint() {
-  local n="$1" avail per rows gi
+# Stacked windows share the 1040x1040 sharp frame; each loses 2px of border per
+# edge plus gaps_in between them. Rows use REC_CELL, the line height measured
+# in the real window, minus 2 x window_padding_width.
+show_layout() {
+  local gi per rows n
   gi="$(hyprctl getoption general:gaps_in -j 2>/dev/null |
     grep -oE '[0-9]+' | head -1)"; gi=${gi:-4}
-  avail=$(( 1040 - 24 - (n * 4) - ((n - 1) * gi) ))
-  per=$(( avail / n ))
-  rows=$(awk "BEGIN{printf \"%d\", ($per - 36) / 31.4}")
-  printf 'rec %s: %d windows stacked vertically in the 1040x1040 frame\n' "stack$n" "$n"
-  printf '  each window ~%dpx tall, 1040 wide -> ~%d rows at font 20\n' "$per" "$rows"
-  printf '  arrange the stack yourself first; this records the sharp region\n'
+  echo "stacked vertically inside the 1040x1040 sharp frame, at font ${REC_FONT}:"
+  for n in 1 2 3; do
+    per=$(( (1040 - 24 - (n * 4) - ((n - 1) * gi)) / n ))
+    rows=$(awk "BEGIN{printf \"%d\", ($per - 36) / ${REC_CELL}}")
+    printf '  %d window(s): each ~%4dpx tall, 1040 wide -> ~%2d rows\n' "$n" "$per" "$rows"
+  done
+  echo
+  echo "whole screen (rec full, 1920x1040) downscaled into a 1080x1920 reel:"
+  echo "  scales 0.562x -> 1080x585, a thin band in the middle of the canvas"
+  echo "  a 2x2 tile becomes 540x292 in the reel: ~32 columns, hard to read"
+  echo
+  echo "for more than 2 windows, or anything side by side, record each tile"
+  echo "separately with 'rec save <name>' and cut between the shots."
 }
 
 # ── named regions ───────────────────────────────────────────────────────────
@@ -166,6 +173,9 @@ open_image() {
 case "${1:-}" in
   stop)
     stop_recording || notify "not recording"
+    exit 0 ;;
+  layout)
+    show_layout
     exit 0 ;;
   list)
     if [[ -s "$REGION_FILE" ]]; then
@@ -236,7 +246,6 @@ for arg in "$@"; do
       TARGET=(-w focused); WHAT="focused window" ;;
     *)
       if is_preset "$arg"; then
-        case "$arg" in stack2) stack_hint 2 ;; stack3) stack_hint 3 ;; esac
         geo="$(geometry_for "$arg")"; TARGET=(-w "$geo"); WHAT="$arg $geo"
       elif geo="$(region_get "$arg")"; then
         region_check "$geo"; TARGET=(-w "$geo"); WHAT="$arg $geo"
