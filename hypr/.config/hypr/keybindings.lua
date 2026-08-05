@@ -158,6 +158,18 @@ bind(M .. " + mouse_down", hl.dsp.focus({workspace = "e+1"}),
 bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 	"[Workspaces|Navigation|Mouse] previous workspace")
 
+-- ── Screen recording ────────────────────────────────────────────────────────
+-- ~/.local/bin/rec wraps gpu-screen-recorder. A bare `rec` starts at 60fps and
+-- 1920x1080; pressing it again stops and saves, so one key is a full toggle.
+-- Output lands in ~/capture.
+--
+-- SUPER+SHIFT+R is HyDE's wallbash mode selector, so the region variant goes on
+-- ALT instead.
+bind(M .. " + R", hl.dsp.exec_cmd("rec"),
+	"[Utilities|Screen recording] toggle recording (60fps, fullscreen)")
+bind(M .. " + ALT + R", hl.dsp.exec_cmd("rec region"),
+	"[Utilities|Screen recording] record a dragged region")
+
 -- ── Volume on the function row ──────────────────────────────────────────────
 -- HyDE moved these to F10/F11/F12. As with brightness on F3/F4, the bare
 -- keysym is what fn+F<n> sends while HP Action Keys mode is active.
