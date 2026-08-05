@@ -94,3 +94,15 @@ hl.config({
 -- The old config also had `blurls = waybar`. That is no longer needed: HyDE
 -- ships a layer rule named hyde_layer_blur in
 -- ~/.local/share/hypr/lua/layer_rules.lua which already blurs the waybar layer.
+
+-- ── Floating centred terminal ───────────────────────────────────────────────
+-- Matched on a dedicated window class rather than "kitty", so ordinary
+-- terminals keep tiling normally. The launcher for it is SUPER+CTRL+T in
+-- keybindings.lua, which starts kitty with --class floatterm.
+hl.window_rule({
+	name = "floating_terminal",
+	match = {class = "floatterm"},
+	float = true,
+	center = true,
+	size = "(monitor_w*0.6) (monitor_h*0.6)",
+})

@@ -158,6 +158,14 @@ bind(M .. " + mouse_down", hl.dsp.focus({workspace = "e+1"}),
 bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 	"[Workspaces|Navigation|Mouse] previous workspace")
 
+-- ── Floating centred terminal ───────────────────────────────────────────────
+-- SUPER+T stays the normal tiled terminal. This one uses a dedicated window
+-- class so the float/center/size rule in userprefs.lua matches only it.
+-- SUPER+SHIFT+T is HyDE's theme selector and SUPER+ALT+T is the pyprland
+-- dropdown, so this goes on CTRL.
+bind(M .. " + CTRL + T", hl.dsp.exec_cmd("kitty --class floatterm"),
+	"[Launcher|Apps] floating centred terminal")
+
 -- ── Screen recording ────────────────────────────────────────────────────────
 -- ~/.local/bin/rec wraps gpu-screen-recorder. A bare `rec` starts at 60fps and
 -- 1920x1080; pressing it again stops and saves, so one key is a full toggle.
