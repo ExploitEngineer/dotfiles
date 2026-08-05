@@ -38,6 +38,11 @@
 # WINDOW
 #   rec win          capture the focused window at its exact bounds
 #
+# TERMINAL
+#   rec fit <preset>  resize the recording terminal to sharp, wide or mid
+#                     without recording, so content can be arranged at the final
+#                     size first. Recording a preset does this automatically.
+#
 # CONTROL
 #   rec              start the default preset, or stop if already recording
 #   rec stop         stop and save
@@ -120,6 +125,33 @@ geometry_for() {
 
 is_preset() { case "$1" in sharp|wide|mid|full) return 0 ;; *) return 1 ;; esac; }
 
+# The recording terminal is pinned to the sharp frame by its window rule, so a
+# shorter preset like wide or mid used to capture a band across the middle of it
+# and cut the top and bottom off. Resize it to whichever frame is being recorded
+# instead, keeping the same 12px desktop margin and 2px border inside the frame:
+#
+#   client = frame - (2 x 12 margin) - (2 x 2 border) = frame - 28
+#   client origin = frame origin + 12 + 2
+#
+# Only for the fixed-width presets. `full` is the whole screen, and a named
+# region usually frames some other application, so neither should move it.
+fit_terminal() {
+  local geo="$1" w h x y
+  w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
+  x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
+  w=$(( w - 28 )); h=$(( h - 28 ))
+  x=$(( x + 14 )); y=$(( y + 14 ))
+  hyprctl eval "
+    local t
+    for _, c in ipairs(hl.get_windows() or {}) do
+      if c.class == 'floatterm' then t = c end
+    end
+    if t then
+      hl.dispatch(hl.dsp.window.resize({window = t, x = $w, y = $h, exact = true}))
+      hl.dispatch(hl.dsp.window.move({window = t, x = $x, y = $y, exact = true}))
+    end" >/dev/null 2>&1 || true
+}
+
 # `rec layout` prints how much room each window gets, so a multi-window shot can
 # be judged before recording rather than after. It never records.
 #
@@ -174,6 +206,18 @@ case "${1:-}" in
   stop)
     stop_recording || notify "not recording"
     exit 0 ;;
+  fit)
+    # Resize the recording terminal to a preset without recording or previewing,
+    # so content can be arranged at the final size first.
+    [[ -n "${2:-}" ]] || die "usage: rec fit <sharp|wide|mid>"
+    case "$2" in sharp|wide|mid) ;; *) die "fit takes sharp, wide or mid" ;; esac
+    init_geometry
+    geo="$(geometry_for "$2")"
+    hyprctl clients -j 2>/dev/null | grep -q '"class": "floatterm"' ||
+      die "no recording terminal open - press SUPER+CTRL+T first"
+    fit_terminal "$geo"
+    echo "$2 frame $geo -> terminal $(( ${geo%%x*} - 28 ))x$(( $(t=${geo#*x}; echo "${t%%+*}") - 28 ))"
+    exit 0 ;;
   layout)
     show_layout
     exit 0 ;;
@@ -217,6 +261,7 @@ case "${1:-}" in
     else die "unknown preset or saved region: $target"; fi
     if (( keep )); then out="$CAPTURE_DIR/preview-$target.png"; mkdir -p "$CAPTURE_DIR"
     else out="/tmp/rec-preview-$target.png"; fi
+    case "$target" in sharp|wide|mid) fit_terminal "$geo"; sleep 0.4 ;; esac
     # grim wants "X,Y WxH"; regions are stored as "WxH+X+Y"
     grim_geo="$(sed -E 's/^([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+)$/\3,\4 \1x\2/' <<<"$geo")"
     grim -g "$grim_geo" "$out" || die "grim failed for $geo"
@@ -225,7 +270,7 @@ case "${1:-}" in
     open_image "$out"
     exit 0 ;;
   -h|--help)
-    sed -n '3,49p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,53p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
 esac
 
@@ -247,6 +292,7 @@ for arg in "$@"; do
     *)
       if is_preset "$arg"; then
         geo="$(geometry_for "$arg")"; TARGET=(-w "$geo"); WHAT="$arg $geo"
+        case "$arg" in sharp|wide|mid) fit_terminal "$geo" ;; esac
       elif geo="$(region_get "$arg")"; then
         region_check "$geo"; TARGET=(-w "$geo"); WHAT="$arg $geo"
       else
@@ -258,6 +304,7 @@ done
 if [[ ${#TARGET[@]} -eq 0 ]]; then
   geo="$(geometry_for "$DEFAULT_PRESET")"
   TARGET=(-w "$geo"); WHAT="$DEFAULT_PRESET $geo"
+  fit_terminal "$geo"
 fi
 
 mkdir -p "$CAPTURE_DIR"
