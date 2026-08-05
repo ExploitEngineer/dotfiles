@@ -13,6 +13,14 @@
 #   rec region          drag the area, record it, do not remember
 #   rec 1080x1080+420+0 exact area: WxH+X+Y
 #
+#   rec sharp pick      click to PLACE a 1080x1080 box, and remember it
+#   rec sharp region    click to place a 1080x1080 box, do not remember
+#   rec 900x900 pick    same, any size
+#
+# A size on its own is centred. A size combined with pick/region lets you click
+# where it goes, which is the only way to get an exact size and choose the spot,
+# since dragging cannot hit an exact size.
+#
 # Size only, always centred on the screen:
 #
 #   rec 1080x1080       exact size, centred
@@ -65,15 +73,15 @@ GEOM=""          # explicit WxH+X+Y, wins over SIZE
 for arg in "$@"; do
   case "$arg" in
     [0-9]*x[0-9]*+[0-9]*+[0-9]*) GEOM="$arg"; MODE="geom" ;;
-    [0-9]*x[0-9]*)  SIZE="$arg"; MODE="size" ;;
+    [0-9]*x[0-9]*)  SIZE="$arg" ;;
     [0-9]*)         FPS="$arg" ;;
-    sharp)          SIZE="1080x1080"; MODE="size" ;;
-    tall)           SIZE="810x1080";  MODE="size" ;;
-    full)           SIZE="";          MODE="size" ;;
+    sharp)          SIZE="1080x1080" ;;
+    tall)           SIZE="810x1080" ;;
+    full)           SIZE="" ;;
     region)         MODE="region" ;;
     pick)           MODE="pick" ;;
     saved|last)     MODE="saved" ;;
-    -h|--help)      sed -n '3,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)      sed -n '3,32p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)              die "unknown argument: $arg" ;;
   esac
 done
@@ -95,8 +103,29 @@ TARGET=()
 if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
   # slurp exits non-zero when cancelled with Esc; without this guard `set -e`
   # would kill the script before any notification.
-  GEO="$(slurp -f '%wx%h+%x+%y')" || { notify "cancelled"; exit 0; }
-  [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
+  if [[ -n "$SIZE" ]]; then
+    # A size combined with pick/region means "this exact size, but let me place
+    # it": slurp -p returns a single clicked point, and the box is centred on it
+    # and clamped to the screen. Dragging cannot give an exact size, so this is
+    # the only way to get both.
+    W="${SIZE%x*}"; H="${SIZE#*x}"
+    (( W > SW )) && W=$SW
+    (( H > SH )) && H=$SH
+    W=$(( W - W % 2 )); H=$(( H - H % 2 ))
+    PT="$(slurp -p -f '%x %y')" || { notify "cancelled"; exit 0; }
+    [[ -n "$PT" ]] || { notify "cancelled"; exit 0; }
+    read -r PX PY <<<"$PT"
+    X=$(( PX - W / 2 )); Y=$(( PY - H / 2 ))
+    (( X < 0 )) && X=0
+    (( Y < 0 )) && Y=0
+    (( X + W > SW )) && X=$(( SW - W ))
+    (( Y + H > SH )) && Y=$(( SH - H ))
+    GEO="${W}x${H}+${X}+${Y}"
+  else
+    # -d shows the live dimensions while dragging, so you can hit a size by eye.
+    GEO="$(slurp -d -f '%wx%h+%x+%y')" || { notify "cancelled"; exit 0; }
+    [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
+  fi
   if [[ "$MODE" == "pick" ]]; then
     mkdir -p "$(dirname "$REGION_FILE")"
     printf '%s\n' "$GEO" > "$REGION_FILE"
