@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+#
+# Screen recording via gpu-screen-recorder.
+#
+#   rec                 60fps, 1920x1080 (whole screen)
+#   rec 30              60 -> 30 fps
+#   rec 1080x1080       exact centred region at that size
+#   rec 30 1080x1080    both, order does not matter
+#   rec sharp           preset: 1080x1080
+#   rec tall            preset: 810x1080
+#   rec full            preset: whole screen (the default)
+#   rec region          drag the area with slurp
+#   rec stop            stop and save
+#
+# Running `rec` again while recording also stops it, so it works as a toggle
+# when bound to a key.
+#
+set -euo pipefail
+
+CAPTURE_DIR="$HOME/capture"
+PIDFILE="/tmp/rec.pid"
+FPS=60
+SIZE=""          # empty means whole screen
+MODE="size"      # size | region
+
+notify() { command -v notify-send >/dev/null 2>&1 && notify-send "rec" "$1" || echo "$1"; }
+die() { printf 'rec: %s\n' "$1" >&2; notify "$1"; exit 1; }
+
+# ── stop an in-flight recording ─────────────────────────────────────────────
+# Only SIGINT makes gpu-screen-recorder finalise the file. SIGTERM or SIGKILL
+# leave an unplayable stub, so never use plain kill or pkill here.
+stop_recording() {
+  local pid; pid="$(cat "$PIDFILE" 2>/dev/null || true)"
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    kill -INT "$pid"
+    rm -f "$PIDFILE"
+    notify "stopped"
+    return 0
+  fi
+  rm -f "$PIDFILE"          # stale pidfile from a crashed run
+  return 1
+}
+
+if [[ "${1:-}" == "stop" ]]; then
+  stop_recording || notify "not recording"
+  exit 0
+fi
+
+# A bare `rec` while recording acts as the stop half of a toggle.
+if [[ $# -eq 0 ]] && stop_recording; then
+  exit 0
+fi
+
+# ── parse args, order independent ───────────────────────────────────────────
+for arg in "$@"; do
+  case "$arg" in
+    [0-9]*x[0-9]*)  SIZE="$arg"; MODE="size" ;;
+    [0-9]*)         FPS="$arg" ;;
+    sharp)          SIZE="1080x1080"; MODE="size" ;;
+    tall)           SIZE="810x1080";  MODE="size" ;;
+    full)           SIZE="";          MODE="size" ;;
+    region)         MODE="region" ;;
+    -h|--help)      sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *)              die "unknown argument: $arg" ;;
+  esac
+done
+
+mkdir -p "$CAPTURE_DIR"
+OUT="$CAPTURE_DIR/$(date +%F-%H%M%S).mp4"
+
+MONITOR="$(gpu-screen-recorder --list-monitors 2>/dev/null | head -1 | cut -d'|' -f1)"
+[[ -n "$MONITOR" ]] || die "no monitor found"
+read -r SW SH < <(gpu-screen-recorder --list-monitors 2>/dev/null | head -1 |
+  cut -d'|' -f2 | tr 'x' ' ')
+SW=${SW:-1920}; SH=${SH:-1080}
+
+# ── work out what to capture ────────────────────────────────────────────────
+TARGET=()
+if [[ "$MODE" == "region" ]]; then
+  # slurp exits non-zero when cancelled with Esc; without this guard `set -e`
+  # would kill the script before any notification.
+  GEO="$(slurp -f '%wx%h+%x+%y')" || { notify "cancelled"; exit 0; }
+  [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
+  TARGET=(-w region -region "$GEO")
+elif [[ -n "$SIZE" && "$SIZE" != "${SW}x${SH}" ]]; then
+  W="${SIZE%x*}"; H="${SIZE#*x}"
+  (( W > SW )) && W=$SW
+  (( H > SH )) && H=$SH
+  W=$(( W - W % 2 )); H=$(( H - H % 2 ))     # encoders want even dimensions
+  TARGET=(-w region -region "${W}x${H}+$(( (SW - W) / 2 ))+$(( (SH - H) / 2 ))")
+else
+  TARGET=(-w "$MONITOR")                      # whole screen, no region maths
+fi
+
+# -k h264      most compatible; HEVC gets re-encoded or rejected by most uploads
+# -cr limited  players assume limited range, full range looks washed out
+# -cursor no   keeps the pointer out of the frame
+gpu-screen-recorder "${TARGET[@]}" \
+  -f "$FPS" -k h264 -q very_high -cr limited -cursor no \
+  -o "$OUT" >/dev/null 2>&1 &
+
+echo $! > "$PIDFILE"
+notify "recording ${SIZE:-${SW}x${SH}} @ ${FPS}fps → $(basename "$OUT")"
