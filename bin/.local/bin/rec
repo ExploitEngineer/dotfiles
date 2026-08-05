@@ -13,13 +13,13 @@
 #   rec region          drag the area, record it, do not remember
 #   rec 1080x1080+420+0 exact area: WxH+X+Y
 #
-#   rec sharp pick      click to PLACE a 1080x1080 box, and remember it
-#   rec sharp region    click to place a 1080x1080 box, do not remember
+#   rec sharp pick      drag to POSITION a 1080x1080 box, and remember it
+#   rec sharp region    drag to position a 1080x1080 box, do not remember
 #   rec 900x900 pick    same, any size
 #
-# A size on its own is centred. A size combined with pick/region lets you click
-# where it goes, which is the only way to get an exact size and choose the spot,
-# since dragging cannot hit an exact size.
+# A size on its own is centred on the screen. A size combined with pick/region
+# lets you place it: you drag a box with the aspect ratio locked, so you can see
+# the framing, and the exact pixel size is snapped around what you dragged.
 #
 # Size only, always centred on the screen:
 #
@@ -104,18 +104,23 @@ if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
   # slurp exits non-zero when cancelled with Esc; without this guard `set -e`
   # would kill the script before any notification.
   if [[ -n "$SIZE" ]]; then
-    # A size combined with pick/region means "this exact size, but let me place
-    # it": slurp -p returns a single clicked point, and the box is centred on it
-    # and clamped to the screen. Dragging cannot give an exact size, so this is
-    # the only way to get both.
+    # A size combined with pick/region means "this exact size, but let me choose
+    # where". You drag a box with the aspect ratio locked to the requested size,
+    # so you can see and position it, and the exact pixel size is then snapped
+    # around the centre of whatever you dragged. Dragging alone cannot land on an
+    # exact size, and a bare click (slurp -p) gives no preview of where the box
+    # would end up, so this is the compromise that shows you the frame.
     W="${SIZE%x*}"; H="${SIZE#*x}"
     (( W > SW )) && W=$SW
     (( H > SH )) && H=$SH
     W=$(( W - W % 2 )); H=$(( H - H % 2 ))
-    PT="$(slurp -p -f '%x %y')" || { notify "cancelled"; exit 0; }
-    [[ -n "$PT" ]] || { notify "cancelled"; exit 0; }
-    read -r PX PY <<<"$PT"
-    X=$(( PX - W / 2 )); Y=$(( PY - H / 2 ))
+
+    SEL="$(slurp -d -a "${W}:${H}" -f '%w %h %x %y')" || { notify "cancelled"; exit 0; }
+    [[ -n "$SEL" ]] || { notify "cancelled"; exit 0; }
+    read -r DW DH DX DY <<<"$SEL"
+
+    # centre the exact-size box on the centre of the dragged one, then clamp
+    X=$(( DX + DW / 2 - W / 2 )); Y=$(( DY + DH / 2 - H / 2 ))
     (( X < 0 )) && X=0
     (( Y < 0 )) && Y=0
     (( X + W > SW )) && X=$(( SW - W ))
