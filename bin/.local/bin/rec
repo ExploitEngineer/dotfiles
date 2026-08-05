@@ -70,14 +70,15 @@ fi
 
 # ── parse args, order independent ───────────────────────────────────────────
 GEOM=""          # explicit WxH+X+Y, wins over SIZE
+PRESET=""        # resolved once the usable area is known
 for arg in "$@"; do
   case "$arg" in
     [0-9]*x[0-9]*+[0-9]*+[0-9]*) GEOM="$arg"; MODE="geom" ;;
     [0-9]*x[0-9]*)  SIZE="$arg" ;;
     [0-9]*)         FPS="$arg" ;;
-    sharp)          SIZE="1080x1080" ;;
-    tall)           SIZE="810x1080" ;;
-    full)           SIZE="" ;;
+    sharp)          PRESET="sharp" ;;
+    tall)           PRESET="tall" ;;
+    full)           SIZE=""; PRESET="" ;;
     region)         MODE="region" ;;
     pick)           MODE="pick" ;;
     saved|last)     MODE="saved" ;;
@@ -95,6 +96,20 @@ read -r SW SH < <(gpu-screen-recorder --list-monitors 2>/dev/null | head -1 |
   cut -d'|' -f2 | tr 'x' ' ')
 SW=${SW:-1920}; SH=${SH:-1080}
 
+# Recording must avoid the space waybar reserves, or the bar lands in the shot.
+# A 1080-tall region on a 1080-tall screen has nowhere to go but y=0, which is
+# exactly why `sharp` was capturing it.
+read -r RL RT RR RB < <(hyprctl monitors -j 2>/dev/null |
+  python3 -c 'import json,sys;r=json.load(sys.stdin)[0]["reserved"];print(*r)' 2>/dev/null || echo "0 0 0 0")
+RL=${RL:-0}; RT=${RT:-0}; RR=${RR:-0}; RB=${RB:-0}
+UX=$RL; UY=$RT
+UW=$(( SW - RL - RR )); UH=$(( SH - RT - RB ))
+
+case "$PRESET" in
+  sharp) SIDE=$(( UH < 1080 ? UH : 1080 )); SIZE="${SIDE}x${SIDE}" ;;
+  tall)  SIZE="810x${UH}" ;;
+esac
+
 # ── work out what to capture ────────────────────────────────────────────────
 # `sharp` and a bare WxH give an exact size but always centre it. To pin down a
 # *specific part* of the screen and reuse it across takes, use `pick` once and
@@ -111,8 +126,8 @@ if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
     # exact size, and a bare click (slurp -p) gives no preview of where the box
     # would end up, so this is the compromise that shows you the frame.
     W="${SIZE%x*}"; H="${SIZE#*x}"
-    (( W > SW )) && W=$SW
-    (( H > SH )) && H=$SH
+    (( W > UW )) && W=$UW
+    (( H > UH )) && H=$UH
     W=$(( W - W % 2 )); H=$(( H - H % 2 ))
 
     SEL="$(slurp -d -a "${W}:${H}" -f '%w %h %x %y')" || { notify "cancelled"; exit 0; }
@@ -121,10 +136,10 @@ if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
 
     # centre the exact-size box on the centre of the dragged one, then clamp
     X=$(( DX + DW / 2 - W / 2 )); Y=$(( DY + DH / 2 - H / 2 ))
-    (( X < 0 )) && X=0
-    (( Y < 0 )) && Y=0
-    (( X + W > SW )) && X=$(( SW - W ))
-    (( Y + H > SH )) && Y=$(( SH - H ))
+    (( X < UX )) && X=$UX
+    (( Y < UY )) && Y=$UY
+    (( X + W > UX + UW )) && X=$(( UX + UW - W ))
+    (( Y + H > UY + UH )) && Y=$(( UY + UH - H ))
     GEO="${W}x${H}+${X}+${Y}"
   else
     # -d shows the live dimensions while dragging, so you can hit a size by eye.
@@ -145,10 +160,10 @@ elif [[ "$MODE" == "geom" ]]; then
   TARGET=(-w region -region "$GEOM")
 elif [[ -n "$SIZE" && "$SIZE" != "${SW}x${SH}" ]]; then
   W="${SIZE%x*}"; H="${SIZE#*x}"
-  (( W > SW )) && W=$SW
-  (( H > SH )) && H=$SH
+  (( W > UW )) && W=$UW
+  (( H > UH )) && H=$UH
   W=$(( W - W % 2 )); H=$(( H - H % 2 ))     # encoders want even dimensions
-  TARGET=(-w region -region "${W}x${H}+$(( (SW - W) / 2 ))+$(( (SH - H) / 2 ))")
+  TARGET=(-w region -region "${W}x${H}+$(( UX + (UW - W) / 2 ))+$(( UY + (UH - H) / 2 ))")
 else
   TARGET=(-w "$MONITOR")                      # whole screen, no region maths
 fi

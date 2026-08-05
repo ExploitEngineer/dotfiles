@@ -99,10 +99,15 @@ hl.config({
 -- Matched on a dedicated window class rather than "kitty", so ordinary
 -- terminals keep tiling normally. The launcher for it is SUPER+CTRL+T in
 -- keybindings.lua, which starts kitty with --class floatterm.
+-- Sized to sit inside the `rec sharp` recording frame, which is the largest
+-- square clearing waybar: 1042x1042 at x=439, y=38. At 60% of the monitor the
+-- terminal was 1152 wide, 110px wider than that frame, so text was clipped off
+-- the right edge of every recording. 960x900 leaves ~40px of margin each side
+-- and ~70px top and bottom, and fills far more of the frame than 648 did.
 hl.window_rule({
 	name = "floating_terminal",
 	match = {class = "floatterm"},
 	float = true,
 	center = true,
-	size = "(monitor_w*0.6) (monitor_h*0.6)",
+	size = "960 900",
 })
