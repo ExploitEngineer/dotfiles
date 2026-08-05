@@ -105,9 +105,11 @@ RL=${RL:-0}; RT=${RT:-0}; RR=${RR:-0}; RB=${RB:-0}
 UX=$RL; UY=$RT
 UW=$(( SW - RL - RR )); UH=$(( SH - RT - RB ))
 
+# Round to a multiple of 4: the encoder aligns width up otherwise, so a 1042
+# request silently came out 1044 and captured 2px more than the frame.
 case "$PRESET" in
-  sharp) SIDE=$(( UH < 1080 ? UH : 1080 )); SIZE="${SIDE}x${SIDE}" ;;
-  tall)  SIZE="810x${UH}" ;;
+  sharp) SIDE=$(( UH < 1080 ? UH : 1080 )); SIDE=$(( SIDE - SIDE % 4 )); SIZE="${SIDE}x${SIDE}" ;;
+  tall)  SIZE="$(( 810 - 810 % 4 ))x$(( UH - UH % 4 ))" ;;
 esac
 
 # ── work out what to capture ────────────────────────────────────────────────
@@ -128,7 +130,7 @@ if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
     W="${SIZE%x*}"; H="${SIZE#*x}"
     (( W > UW )) && W=$UW
     (( H > UH )) && H=$UH
-    W=$(( W - W % 2 )); H=$(( H - H % 2 ))
+    W=$(( W - W % 4 )); H=$(( H - H % 4 ))
 
     SEL="$(slurp -d -a "${W}:${H}" -f '%w %h %x %y')" || { notify "cancelled"; exit 0; }
     [[ -n "$SEL" ]] || { notify "cancelled"; exit 0; }
@@ -151,28 +153,42 @@ if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
     printf '%s\n' "$GEO" > "$REGION_FILE"
     notify "region saved: $GEO"
   fi
-  TARGET=(-w region -region "$GEO")
+  TARGET=(-w "$GEO")
 elif [[ "$MODE" == "saved" ]]; then
   GEO="$(cat "$REGION_FILE" 2>/dev/null || true)"
   [[ -n "$GEO" ]] || die "no saved region yet - run 'rec pick' first"
-  TARGET=(-w region -region "$GEO")
+  TARGET=(-w "$GEO")
 elif [[ "$MODE" == "geom" ]]; then
-  TARGET=(-w region -region "$GEOM")
+  TARGET=(-w "$GEOM")
 elif [[ -n "$SIZE" && "$SIZE" != "${SW}x${SH}" ]]; then
   W="${SIZE%x*}"; H="${SIZE#*x}"
   (( W > UW )) && W=$UW
   (( H > UH )) && H=$UH
-  W=$(( W - W % 2 )); H=$(( H - H % 2 ))     # encoders want even dimensions
-  TARGET=(-w region -region "${W}x${H}+$(( UX + (UW - W) / 2 ))+$(( UY + (UH - H) / 2 ))")
+  W=$(( W - W % 4 )); H=$(( H - H % 4 ))     # encoder aligns width to 4
+  TARGET=(-w "${W}x${H}+$(( UX + (UW - W) / 2 ))+$(( UY + (UH - H) / 2 ))")
 else
   TARGET=(-w "$MONITOR")                      # whole screen, no region maths
 fi
 
-# -k h264      most compatible; HEVC gets re-encoded or rejected by most uploads
-# -cr limited  players assume limited range, full range looks washed out
-# -cursor no   keeps the pointer out of the frame
+# -encoder cpu     x264 rather than this machine's NVENC. The GPU is a Quadro
+#                  P1000: Pascal, 6th-gen NVENC, whose documented weak spot is
+#                  high-contrast glyph edges. The mosquito noise it puts around
+#                  terminal text survives the downstream re-encodes and shows up
+#                  in the final upload. The Xeon E-2176M (6c/12t) is nowhere near
+#                  loaded by 1042x1042 of near-static terminal.
+# -bm cbr -q 15000 constant 15 Mbps. QP mode was not wrong, but this file is a
+#                  master, not a deliverable: ~56MB for 30s costs nothing and
+#                  guarantees the one high-complexity moment, a fast scroll, is
+#                  not starved of bits. 25 Mbps is past transparent for this
+#                  content.
+# -k h264          most compatible; HEVC gets re-encoded or rejected by uploads.
+#                  Deliberately staying yuv420p: 4:4:4 is genuinely better for
+#                  coloured text, but High 4:4:4 Predictive has poor mobile
+#                  support and this file goes straight to a phone app.
+# -cr limited      players assume limited range; full range looks washed out
+# -cursor no       keeps the pointer out of the frame
 gpu-screen-recorder "${TARGET[@]}" \
-  -f "$FPS" -k h264 -q very_high -cr limited -cursor no \
+  -f "$FPS" -k h264 -encoder cpu -bm cbr -q 15000 -cr limited -cursor no \
   -o "$OUT" >/dev/null 2>&1 &
 
 echo $! > "$PIDFILE"

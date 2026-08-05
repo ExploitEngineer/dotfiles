@@ -95,19 +95,33 @@ hl.config({
 -- ships a layer rule named hyde_layer_blur in
 -- ~/.local/share/hypr/lua/layer_rules.lua which already blurs the waybar layer.
 
--- ── Floating centred terminal ───────────────────────────────────────────────
+-- ── Floating centred terminal, sized to the recording frame ─────────────────
 -- Matched on a dedicated window class rather than "kitty", so ordinary
--- terminals keep tiling normally. The launcher for it is SUPER+CTRL+T in
--- keybindings.lua, which starts kitty with --class floatterm.
--- Sized to sit inside the `rec sharp` recording frame, which is the largest
--- square clearing waybar: 1042x1042 at x=439, y=38. At 60% of the monitor the
--- terminal was 1152 wide, 110px wider than that frame, so text was clipped off
--- the right edge of every recording. 960x900 leaves ~40px of margin each side
--- and ~70px top and bottom, and fills far more of the frame than 648 did.
+-- terminals keep tiling. Launched by SUPER+CTRL+T in keybindings.lua.
+--
+-- 1040x1040 is exactly the `rec sharp` frame: the largest square clearing
+-- waybar (1042) rounded down to a multiple of 4, because the encoder aligns
+-- width upward and 1042 came out as 1044. Centring in the usable area puts both
+-- at 440,39, so a recording has zero desktop border.
+--
+-- Two earlier sizes were wrong in opposite directions: 60% of the monitor was
+-- 1152 wide, 110px past the frame, clipping text off the right; 960x900 fixed
+-- that but left ~40px of wallpaper on all four sides.
+--
+-- The no_bounds entry is required. HyDE clamps floating windows to 95% of the
+-- usable area (hyde/handlers.lua, float_size_bounds), and its logical monitor
+-- reserves top=48.8 and bottom=10.8, so the cap is floor(1020.4 * 0.95) = 969.
+-- That silently shrank this window and produced a 73px strip of wallpaper in
+-- every recording. Listing the class opts this one window out instead of
+-- disabling the clamp globally.
+hyde.config.window = hyde.config.window or {}
+hyde.config.window.float = hyde.config.window.float or {}
+hyde.config.window.float.no_bounds = {class = {"floatterm"}}
+
 hl.window_rule({
 	name = "floating_terminal",
 	match = {class = "floatterm"},
 	float = true,
 	center = true,
-	size = "960 900",
+	size = "1040 1040",
 })
