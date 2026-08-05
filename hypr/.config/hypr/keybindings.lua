@@ -163,14 +163,22 @@ bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 -- class so the float/center/size rule in userprefs.lua matches only it.
 -- SUPER+SHIFT+T is HyDE's theme selector and SUPER+ALT+T is the pyprland
 -- dropdown, so this goes on CTRL.
--- font_size is pinned rather than left to the running config: changing it
--- mid-take produces a visible jump in the middle of a recording that cannot be
--- fixed in the edit. 30px gives ~34 lines in the 1042 frame, roughly Instagram
--- caption size after the upscale to 1080. Do not go much past 32: the density of
--- the text is the point, and at 36px it stops reading as a wall and the reveal
--- loses its effect.
-bind(M .. " + CTRL + T", hl.dsp.exec_cmd("kitty --class floatterm --override font_size=30"),
-	"[Launcher|Apps] floating centred terminal (recording, 30px)")
+-- Overrides are set here rather than in the main kitty config so an ordinary
+-- terminal is unaffected. Pinning matters because changing font size mid-take
+-- leaves a visible jump that cannot be edited out.
+--
+-- Measured on this font: line height is about font_size * 1.57.
+--   font 30 -> 47.8px line height, 21 rows   (too coarse, was the default)
+--   font 21 -> 33.5px line height, 30 rows
+--   font 20 -> 31.4px line height, 32 rows   <- chosen
+-- Divide the line height you want by 1.57 to pick a size by eye.
+--
+-- window_padding_width 18 keeps a small gap between the terminal border and the
+-- text, so the border stays visible inside the capture without text bleeding to
+-- the frame edge.
+bind(M .. " + CTRL + T",
+	hl.dsp.exec_cmd("kitty --class floatterm --override font_size=20 --override window_padding_width=18"),
+	"[Launcher|Apps] floating terminal for recording (1040px, 32 rows)")
 
 -- ── Screen recording ────────────────────────────────────────────────────────
 -- ~/.local/bin/rec wraps gpu-screen-recorder. A bare `rec` starts at 60fps and
