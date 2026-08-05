@@ -13,11 +13,24 @@
 #   rec mid          1040x780    4:3, middle ground
 #   rec full         1920x1040   whole usable screen, waybar excluded
 #
+# STACKED LAYOUTS  same 1040x1040 region as sharp; Hyprland does the tiling, so
+#                  arrange the stack yourself first. These print the per-window
+#                  height and row budget before recording.
+#   rec stack2       two windows stacked vertically, each 1040 wide
+#   rec stack3       three windows stacked vertically, each 1040 wide
+#
+#                  Vertical only. Side by side at 1080 output gives each window
+#                  ~520px, about 31 columns, which is unreadable.
+#
 # NAMED REGIONS   for framing a specific GUI panel and hitting it again later
 #   rec save <name>  drag a region with slurp and store it under <name>
 #   rec <name>       record using that saved geometry
 #   rec list         show every saved region
 #   rec forget <name>  delete one
+#
+#   For tiled layouts with more than 2 windows, or side-by-side windows, do not
+#   capture them together - 1080px output width cannot make them readable.
+#   Use `rec save <name>` on each tile separately and cut between the shots.
 #
 # PREVIEW         check framing without recording
 #   rec preview <preset|name>          still to /tmp, opened in a viewer
@@ -91,7 +104,7 @@ init_geometry() {
 geometry_for() {
   local w h
   case "$1" in
-    sharp) w=$CAPTURE_W; h=1040 ;;
+    sharp|stack2|stack3) w=$CAPTURE_W; h=1040 ;;
     wide)  w=$CAPTURE_W; h=584  ;;   # 585 rounded to even
     mid)   w=$CAPTURE_W; h=780  ;;
     full)  w=$UW;        h=$UH  ;;
@@ -104,7 +117,26 @@ geometry_for() {
     $(( UX + (UW - w) / 2 )) $(( UY + (UH - h) / 2 ))
 }
 
-is_preset() { case "$1" in sharp|wide|mid|full) return 0 ;; *) return 1 ;; esac; }
+is_preset() { case "$1" in sharp|wide|mid|full|stack2|stack3) return 0 ;; *) return 1 ;; esac; }
+
+# stack2 / stack3 record the same 1040x1040 region as sharp. Hyprland does the
+# tiling; forcing a split direction from a script is fragile, so these just
+# print the per-window budget so the layout can be arranged by hand first.
+#
+# Budget: 1040 frame, minus 2x12px desktop margin, minus 2px border per window
+# edge, minus gaps_in between them, divided by N. Rows use the measured line
+# height of font_size * 1.57, minus 2 x window_padding_width 18.
+stack_hint() {
+  local n="$1" avail per rows gi
+  gi="$(hyprctl getoption general:gaps_in -j 2>/dev/null |
+    grep -oE '[0-9]+' | head -1)"; gi=${gi:-4}
+  avail=$(( 1040 - 24 - (n * 4) - ((n - 1) * gi) ))
+  per=$(( avail / n ))
+  rows=$(awk "BEGIN{printf \"%d\", ($per - 36) / 31.4}")
+  printf 'rec %s: %d windows stacked vertically in the 1040x1040 frame\n' "stack$n" "$n"
+  printf '  each window ~%dpx tall, 1040 wide -> ~%d rows at font 20\n' "$per" "$rows"
+  printf '  arrange the stack yourself first; this records the sharp region\n'
+}
 
 # ── named regions ───────────────────────────────────────────────────────────
 region_get() {
@@ -183,7 +215,7 @@ case "${1:-}" in
     open_image "$out"
     exit 0 ;;
   -h|--help)
-    sed -n '3,36p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,49p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
 esac
 
@@ -204,6 +236,7 @@ for arg in "$@"; do
       TARGET=(-w focused); WHAT="focused window" ;;
     *)
       if is_preset "$arg"; then
+        case "$arg" in stack2) stack_hint 2 ;; stack3) stack_hint 3 ;; esac
         geo="$(geometry_for "$arg")"; TARGET=(-w "$geo"); WHAT="$arg $geo"
       elif geo="$(region_get "$arg")"; then
         region_check "$geo"; TARGET=(-w "$geo"); WHAT="$arg $geo"

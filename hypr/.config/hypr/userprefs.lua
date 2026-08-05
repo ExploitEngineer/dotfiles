@@ -118,10 +118,20 @@ hyde.config.window = hyde.config.window or {}
 hyde.config.window.float = hyde.config.window.float or {}
 hyde.config.window.float.no_bounds = {class = {"floatterm"}}
 
+-- Deliberately smaller than the 1040 capture region so the window's own border
+-- lands *inside* the frame with desktop visible outside it, giving the shot a
+-- container instead of text running to the edge:
+--
+--   1040 frame - (2 x 12px desktop margin) - (2 x general:border_size 2) = 1012
+--
+-- Hyprland draws the border outside the size reported here, so 1012 client plus
+-- 2px border each side is 1016 of visible window, centred in 1040 with 12px of
+-- desktop on every side. Centring in the usable area is the same point as
+-- centring in the region: both have centre 960,558.
 hl.window_rule({
 	name = "floating_terminal",
 	match = {class = "floatterm"},
 	float = true,
 	center = true,
-	size = "1040 1040",
+	size = "1012 1012",
 })
