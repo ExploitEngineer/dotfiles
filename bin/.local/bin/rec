@@ -2,16 +2,23 @@
 #
 # Screen recording via gpu-screen-recorder, framed for a 1080x1920 reel.
 #
-# Capture width is fixed at 1040 across every preset. Anything narrower gets
-# upscaled to the 1080-wide canvas and softens text, so only the height varies.
-# Every preset therefore shares the same 1.038x scale to the reel.
+# Capture width is fixed at 1012 across sharp/wide/mid, so the three cut
+# together: all share optical centre 960,558. Only the height varies.
+#
+# The region is the terminal's real window frame, read back from the compositor
+# after placing it, so the outermost captured pixels are the window border and
+# nothing outside it. The drop shadow falls outside the frame and is excluded.
 #
 # PRESETS
-#   rec sharp        1040x1040   square, single terminal (the default)
-#   rec wide         1040x584    16:9, two terminals side by side or a wide
-#                                GUI panel; becomes a centred band in the reel
-#   rec mid          1040x780    4:3, middle ground
-#   rec full         1920x1040   whole usable screen, waybar excluded
+#   rec sharp        1012x1012   square, single terminal (the default)
+#   rec wide         1012x556    16:9, a wide panel; a centred band in the reel
+#   rec mid          1012x752    4:3, middle ground
+#   rec full         1920x1040   whole usable screen
+#
+#                    full is 1040 tall, not 1080, on purpose: waybar reserves
+#                    38px at the top and that is deliberately cropped out, with
+#                    2px more lost to even-dimension rounding. Recording the
+#                    full 1080 would put the bar in shot.
 #
 # MULTI-WINDOW
 #   rec layout       print how many rows each window gets when 1, 2 or 3 are
@@ -58,7 +65,15 @@ CAPTURE_DIR="$HOME/capture"
 PIDFILE="/tmp/rec.pid"
 REGION_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/rec"
 REGION_FILE="$REGION_DIR/regions"
-CAPTURE_W=1040          # fixed; see header
+# Target CAPTURE REGION sizes. The terminal client is derived from these by
+# subtracting the live border, so the region lands on these numbers exactly
+# rather than being whatever the window happened to round to.
+REGION_W=1012           # see the zoom-budget note in --help
+REGION_SHARP_H=1012
+REGION_WIDE_H=556
+REGION_MID_H=752
+CENTRE_X=960            # shared optical centre, so presets can be cut together
+CENTRE_Y=558
 DEFAULT_PRESET="sharp"
 REC_FONT=17            # keep in step with the launcher in keybindings.lua
 REC_CELL=30.5          # measured line height at REC_FONT, not a formula
@@ -105,42 +120,62 @@ init_geometry() {
   UW=$(( UW - UW % 4 )); UH=$(( UH - UH % 4 ))
 }
 
-# geometry_for <preset> -> WxH+X+Y, centred horizontally and within the usable
-# box vertically. Width is forced to CAPTURE_W for every preset except full.
-geometry_for() {
+# client_for <preset> -> the terminal CLIENT geometry, WxH+X+Y.
+#
+# This is window placement only. The capture region is read back from the
+# compositor afterwards, so the margin/border arithmetic that used to inflate
+# every recording by 28px no longer touches the region at all.
+#
+# All three share optical centre (CENTRE_X, CENTRE_Y) so presets cut together.
+border_size() {
+  local bs
+  bs="$(hyprctl getoption general:border_size -j 2>/dev/null |
+    grep -oE '"int": *[0-9]+' | grep -oE '[0-9]+')"
+  echo "${bs:-1}"
+}
+
+# region_for <preset> -> the target capture region, WxH+X+Y, centred on the
+# shared optical centre.
+region_for() {
   local w h
   case "$1" in
-    sharp) w=$CAPTURE_W; h=1040 ;;
-    wide)  w=$CAPTURE_W; h=584  ;;   # 585 rounded to even
-    mid)   w=$CAPTURE_W; h=780  ;;
-    full)  w=$UW;        h=$UH  ;;
+    sharp) w=$REGION_W; h=$REGION_SHARP_H ;;
+    wide)  w=$REGION_W; h=$REGION_WIDE_H  ;;
+    mid)   w=$REGION_W; h=$REGION_MID_H   ;;
     *)     return 1 ;;
   esac
-  (( w > UW )) && w=$UW
-  (( h > UH )) && h=$UH
-  w=$(( w - w % 4 )); h=$(( h - h % 2 ))
   printf '%dx%d+%d+%d' "$w" "$h" \
-    $(( UX + (UW - w) / 2 )) $(( UY + (UH - h) / 2 ))
+    $(( CENTRE_X - w / 2 )) $(( CENTRE_Y - h / 2 ))
 }
+
+# client_for <preset> -> the terminal client geometry that makes the window
+# frame equal the target region: client = region - 2 x border_size.
+client_for() {
+  local geo w h x y bs; bs="$(border_size)"
+  geo="$(region_for "$1")" || return 1
+  w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
+  x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
+  printf '%dx%d+%d+%d' $(( w - 2 * bs )) $(( h - 2 * bs )) \
+    $(( x + bs )) $(( y + bs ))
+}
+
+# full is the only preset with no terminal involved: it is the usable desktop,
+# which deliberately excludes the space waybar reserves.
+full_region() { printf '%dx%d+%d+%d' "$UW" "$UH" "$UX" "$UY"; }
 
 is_preset() { case "$1" in sharp|wide|mid|full) return 0 ;; *) return 1 ;; esac; }
 
-# The recording terminal is pinned to the sharp frame by its window rule, so a
-# shorter preset like wide or mid used to capture a band across the middle of it
-# and cut the top and bottom off. Resize it to whichever frame is being recorded
-# instead, keeping the same 12px desktop margin and 2px border inside the frame:
+# Place the recording terminal so its client area is exactly the preset size,
+# centred on the shared optical centre. The capture region is NOT derived from
+# this: it is read back from the compositor afterwards by term_region, so the two
+# concerns stay separate.
 #
-#   client = frame - (2 x 12 margin) - (2 x 2 border) = frame - 28
-#   client origin = frame origin + 12 + 2
-#
-# Only for the fixed-width presets. `full` is the whole screen, and a named
-# region usually frames some other application, so neither should move it.
+# Previously this folded a 12px desktop margin and an assumed 2px border into the
+# region itself, which made every capture 28px larger than the terminal and
+# included a strip of whatever was behind it. border_size is also theme-dependent
+# and is currently 1, so hardcoding it was wrong regardless.
 fit_terminal() {
-  local geo="$1" w h x y
-  w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
-  x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
-  w=$(( w - 28 )); h=$(( h - 28 ))
-  x=$(( x + 14 )); y=$(( y + 14 ))
+  local w="$1" h="$2" x="$3" y="$4"
   hyprctl eval "
     local t
     for _, c in ipairs(hl.get_windows() or {}) do
@@ -150,6 +185,46 @@ fit_terminal() {
       hl.dispatch(hl.dsp.window.resize({window = t, x = $w, y = $h, exact = true}))
       hl.dispatch(hl.dsp.window.move({window = t, x = $x, y = $y, exact = true}))
     end" >/dev/null 2>&1 || true
+}
+
+# The capture region: the terminal's real frame, queried from the compositor and
+# grown by border_size on each side so the outermost captured pixels are the
+# border itself. The drop shadow (decoration:shadow, range 10) falls outside the
+# frame and is deliberately excluded.
+term_region() {
+  local bs
+  bs="$(border_size)"
+  hyprctl clients -j 2>/dev/null | python3 -c "
+import json,sys
+bs=int('${bs}')
+for c in json.load(sys.stdin):
+    if c.get('class')=='floatterm':
+        w,h=c['size']; x,y=c['at']
+        print('%dx%d+%d+%d'%(w+2*bs, h+2*bs, x-bs, y-bs))
+        break
+" 2>/dev/null
+}
+
+wait_for_terminal() {   # let the resize land before reading geometry back
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    [[ -n "$(term_region)" ]] && { sleep 0.15; return 0; }
+    sleep 0.1
+  done
+  return 1
+}
+
+# Place the terminal for a preset, then report the region actually captured.
+# Fails if no recording terminal is open, since there would be nothing to frame.
+place_and_region() {
+  local geo w h x y
+  geo="$(client_for "$1")" || return 1
+  w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
+  x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
+  hyprctl clients -j 2>/dev/null | grep -q '"class": "floatterm"' || return 1
+  fit_terminal "$w" "$h" "$x" "$y"
+  wait_for_terminal || return 1
+  term_region
 }
 
 # `rec layout` prints how much room each window gets, so a multi-window shot can
@@ -187,7 +262,7 @@ region_check() {   # warn about framing problems, never block
   local geo="$1" w h x y
   w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
   x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
-  (( w < CAPTURE_W )) && warn "width ${w} is under ${CAPTURE_W}; it will be upscaled and text will soften"
+  (( w < REGION_W )) && warn "width ${w} is under ${REGION_W}; it will be upscaled and text will soften"
   (( y < UY ))        && warn "region starts at y=${y}, above the usable area (y=${UY}); waybar will be in shot"
   (( w % 4 != 0 ))    && warn "width ${w} is not a multiple of 4; the encoder will round it up"
   return 0
@@ -212,11 +287,9 @@ case "${1:-}" in
     [[ -n "${2:-}" ]] || die "usage: rec fit <sharp|wide|mid>"
     case "$2" in sharp|wide|mid) ;; *) die "fit takes sharp, wide or mid" ;; esac
     init_geometry
-    geo="$(geometry_for "$2")"
-    hyprctl clients -j 2>/dev/null | grep -q '"class": "floatterm"' ||
+    geo="$(place_and_region "$2")" ||
       die "no recording terminal open - press SUPER+CTRL+T first"
-    fit_terminal "$geo"
-    echo "$2 frame $geo -> terminal $(( ${geo%%x*} - 28 ))x$(( $(t=${geo#*x}; echo "${t%%+*}") - 28 ))"
+    echo "$2: terminal $(client_for "$2")  ->  capture region $geo"
     exit 0 ;;
   layout)
     show_layout
@@ -256,12 +329,14 @@ case "${1:-}" in
     init_geometry
     target="$2"; keep=0
     [[ "${3:-}" == "--keep" ]] && keep=1
-    if is_preset "$target"; then geo="$(geometry_for "$target")"
+    if [[ "$target" == full ]]; then geo="$(full_region)"
+    elif is_preset "$target"; then
+      geo="$(place_and_region "$target")" ||
+        die "no recording terminal open - press SUPER+CTRL+T first"
     elif geo="$(region_get "$target")"; then :
     else die "unknown preset or saved region: $target"; fi
     if (( keep )); then out="$CAPTURE_DIR/preview-$target.png"; mkdir -p "$CAPTURE_DIR"
     else out="/tmp/rec-preview-$target.png"; fi
-    case "$target" in sharp|wide|mid) fit_terminal "$geo"; sleep 0.4 ;; esac
     # grim wants "X,Y WxH"; regions are stored as "WxH+X+Y"
     grim_geo="$(sed -E 's/^([0-9]+)x([0-9]+)\+([0-9]+)\+([0-9]+)$/\3,\4 \1x\2/' <<<"$geo")"
     grim -g "$grim_geo" "$out" || die "grim failed for $geo"
@@ -270,7 +345,7 @@ case "${1:-}" in
     open_image "$out"
     exit 0 ;;
   -h|--help)
-    sed -n '3,53p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,60p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
 esac
 
@@ -291,8 +366,12 @@ for arg in "$@"; do
       TARGET=(-w focused); WHAT="focused window" ;;
     *)
       if is_preset "$arg"; then
-        geo="$(geometry_for "$arg")"; TARGET=(-w "$geo"); WHAT="$arg $geo"
-        case "$arg" in sharp|wide|mid) fit_terminal "$geo" ;; esac
+        if [[ "$arg" == full ]]; then
+          geo="$(full_region)"
+        else
+          geo="$(place_and_region "$arg")" || die "no recording terminal open - press SUPER+CTRL+T first"
+        fi
+        TARGET=(-w "$geo"); WHAT="$arg $geo"
       elif geo="$(region_get "$arg")"; then
         region_check "$geo"; TARGET=(-w "$geo"); WHAT="$arg $geo"
       else
@@ -302,9 +381,9 @@ for arg in "$@"; do
 done
 
 if [[ ${#TARGET[@]} -eq 0 ]]; then
-  geo="$(geometry_for "$DEFAULT_PRESET")"
+  geo="$(place_and_region "$DEFAULT_PRESET")" ||
+    die "no recording terminal open - press SUPER+CTRL+T first"
   TARGET=(-w "$geo"); WHAT="$DEFAULT_PRESET $geo"
-  fit_terminal "$geo"
 fi
 
 mkdir -p "$CAPTURE_DIR"
