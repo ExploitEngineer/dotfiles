@@ -4,21 +4,30 @@
 #
 #   rec                 60fps, 1920x1080 (whole screen)
 #   rec 30              60 -> 30 fps
-#   rec 1080x1080       exact centred region at that size
-#   rec 30 1080x1080    both, order does not matter
-#   rec sharp           preset: 1080x1080
-#   rec tall            preset: 810x1080
-#   rec full            preset: whole screen (the default)
-#   rec region          drag the area with slurp
 #   rec stop            stop and save
 #
-# Running `rec` again while recording also stops it, so it works as a toggle
-# when bound to a key.
+# Choosing WHICH PART of the screen to record:
+#
+#   rec pick            drag the area, record it, and remember it
+#   rec saved           record that remembered area again
+#   rec region          drag the area, record it, do not remember
+#   rec 1080x1080+420+0 exact area: WxH+X+Y
+#
+# Size only, always centred on the screen:
+#
+#   rec 1080x1080       exact size, centred
+#   rec sharp           preset: 1080x1080 centred
+#   rec tall            preset: 810x1080 centred
+#   rec full            whole screen (the default)
+#
+# Arguments combine in any order, e.g. `rec 30 saved` or `rec sharp 30`.
+# Running `rec` again while recording stops it, so one key is a full toggle.
 #
 set -euo pipefail
 
 CAPTURE_DIR="$HOME/capture"
 PIDFILE="/tmp/rec.pid"
+REGION_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/rec-region"
 FPS=60
 SIZE=""          # empty means whole screen
 MODE="size"      # size | region
@@ -52,15 +61,19 @@ if [[ $# -eq 0 ]] && stop_recording; then
 fi
 
 # ── parse args, order independent ───────────────────────────────────────────
+GEOM=""          # explicit WxH+X+Y, wins over SIZE
 for arg in "$@"; do
   case "$arg" in
+    [0-9]*x[0-9]*+[0-9]*+[0-9]*) GEOM="$arg"; MODE="geom" ;;
     [0-9]*x[0-9]*)  SIZE="$arg"; MODE="size" ;;
     [0-9]*)         FPS="$arg" ;;
     sharp)          SIZE="1080x1080"; MODE="size" ;;
     tall)           SIZE="810x1080";  MODE="size" ;;
     full)           SIZE="";          MODE="size" ;;
     region)         MODE="region" ;;
-    -h|--help)      sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    pick)           MODE="pick" ;;
+    saved|last)     MODE="saved" ;;
+    -h|--help)      sed -n '3,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)              die "unknown argument: $arg" ;;
   esac
 done
@@ -75,13 +88,27 @@ read -r SW SH < <(gpu-screen-recorder --list-monitors 2>/dev/null | head -1 |
 SW=${SW:-1920}; SH=${SH:-1080}
 
 # ── work out what to capture ────────────────────────────────────────────────
+# `sharp` and a bare WxH give an exact size but always centre it. To pin down a
+# *specific part* of the screen and reuse it across takes, use `pick` once and
+# `saved` thereafter, or pass the full geometry yourself.
 TARGET=()
-if [[ "$MODE" == "region" ]]; then
+if [[ "$MODE" == "pick" || "$MODE" == "region" ]]; then
   # slurp exits non-zero when cancelled with Esc; without this guard `set -e`
   # would kill the script before any notification.
   GEO="$(slurp -f '%wx%h+%x+%y')" || { notify "cancelled"; exit 0; }
   [[ -n "$GEO" ]] || { notify "cancelled"; exit 0; }
+  if [[ "$MODE" == "pick" ]]; then
+    mkdir -p "$(dirname "$REGION_FILE")"
+    printf '%s\n' "$GEO" > "$REGION_FILE"
+    notify "region saved: $GEO"
+  fi
   TARGET=(-w region -region "$GEO")
+elif [[ "$MODE" == "saved" ]]; then
+  GEO="$(cat "$REGION_FILE" 2>/dev/null || true)"
+  [[ -n "$GEO" ]] || die "no saved region yet - run 'rec pick' first"
+  TARGET=(-w region -region "$GEO")
+elif [[ "$MODE" == "geom" ]]; then
+  TARGET=(-w region -region "$GEOM")
 elif [[ -n "$SIZE" && "$SIZE" != "${SW}x${SH}" ]]; then
   W="${SIZE%x*}"; H="${SIZE#*x}"
   (( W > SW )) && W=$SW
@@ -100,4 +127,11 @@ gpu-screen-recorder "${TARGET[@]}" \
   -o "$OUT" >/dev/null 2>&1 &
 
 echo $! > "$PIDFILE"
-notify "recording ${SIZE:-${SW}x${SH}} @ ${FPS}fps → $(basename "$OUT")"
+
+# Report the area actually being captured, not just the requested size.
+case "$MODE" in
+  pick|region|saved) WHAT="$GEO" ;;
+  geom)              WHAT="$GEOM" ;;
+  *)                 WHAT="${SIZE:-${SW}x${SH}}" ;;
+esac
+notify "recording $WHAT @ ${FPS}fps → $(basename "$OUT")"
