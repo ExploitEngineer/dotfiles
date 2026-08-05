@@ -158,13 +158,6 @@ bind(M .. " + mouse_down", hl.dsp.focus({workspace = "e+1"}),
 bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 	"[Workspaces|Navigation|Mouse] previous workspace")
 
--- ── Screen recording ────────────────────────────────────────────────────────
--- ~/.local/bin/rec-toggle: first press picks a region and starts recording,
--- second press stops it. Output lands in ~/capture.
--- Needs wf-recorder on Wayland (slurp is already present).
-bind(M .. " + R", hl.dsp.exec_cmd("rec-toggle"),
-	"[Utilities|Screen recording] toggle region screen recording")
-
 -- ── Volume on the function row ──────────────────────────────────────────────
 -- HyDE moved these to F10/F11/F12. As with brightness on F3/F4, the bare
 -- keysym is what fn+F<n> sends while HP Action Keys mode is active.
