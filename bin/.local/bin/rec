@@ -5,6 +5,12 @@
 # Capture width is fixed at 1012 across sharp/wide/mid, so the three cut
 # together: all share optical centre 960,558. Only the height varies.
 #
+# DO NOT "fix" 1012 toward 1080. It is a deliberate choice: nothing is ever
+# upscaled, and the clip is placed at native width inside the 1080 reel canvas.
+# Widening to 1080 is impossible for sharp anyway, since the usable desktop is
+# only 1040 tall once waybar is excluded, and resampling is exactly what ruins
+# terminal text.
+#
 # The region is the terminal's real window frame, read back from the compositor
 # after placing it, so the outermost captured pixels are the window border and
 # nothing outside it. The drop shadow falls outside the frame and is excluded.
@@ -78,6 +84,15 @@ DEFAULT_PRESET="sharp"
 REC_FONT=17            # keep in step with the launcher in keybindings.lua
 REC_CELL=30.5          # measured line height at REC_FONT, not a formula
 FPS=60
+
+# Every gpu-screen-recorder invocation goes through GSR_FLAGS. Defined readonly
+# and in one place so no code path can record without them:
+#   -cursor no     the pointer must never appear in a take
+#   -k h264        HEVC gets re-encoded or rejected by upload targets
+#   -encoder cpu   Pascal NVENC leaves mosquito noise on glyph edges
+#   -bm cbr -q     15 Mbps ceiling; static frames stay cheap
+#   -cr limited    players assume limited range
+readonly GSR_FLAGS=(-k h264 -encoder cpu -bm cbr -q 15000 -cr limited -cursor no)
 
 notify() { command -v notify-send >/dev/null 2>&1 && notify-send "rec" "$1" || echo "$1"; }
 warn()   { printf 'rec: warning: %s\n' "$1" >&2; }
@@ -205,13 +220,38 @@ for c in json.load(sys.stdin):
 " 2>/dev/null
 }
 
-wait_for_terminal() {   # let the resize land before reading geometry back
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    [[ -n "$(term_region)" ]] && { sleep 0.15; return 0; }
-    sleep 0.1
+# hyprctl reports a window's TARGET geometry the instant a resize is dispatched,
+# not where it currently is on screen, so polling for a stable read returns
+# immediately and lands mid-animation. The stability poll below still guards
+# against a slow reconfigure, but the animation itself needs a real delay.
+#
+# The delay is only paid when the geometry actually changed: recording sharp
+# twice in a row moves nothing, so there is nothing to wait for.
+anim_ms() {
+  local sp
+  sp="$(hyprctl animations 2>/dev/null |
+    awk '/speed:/{ if ($2+0 > m) m = $2+0 } END{ print int(m * 100) }')"
+  [[ "${sp:-0}" -gt 0 ]] && echo "$sp" || echo 400
+}
+
+wait_for_terminal() {   # $1 = geometry before the resize, may be empty
+  local before="${1:-}" cur prev="" stable=0 i
+  for i in $(seq 1 40); do
+    cur="$(term_region)"
+    if [[ -n "$cur" && "$cur" == "$prev" ]]; then
+      stable=$(( stable + 1 ))
+      (( stable >= 3 )) && break
+    else
+      stable=0
+    fi
+    prev="$cur"
+    sleep 0.05
   done
-  return 1
+  [[ -n "$cur" ]] || return 1
+  # Nothing moved, so no animation is in flight.
+  [[ "$cur" == "$before" ]] && return 0
+  sleep "$(awk "BEGIN{printf \"%.2f\", $(anim_ms) / 1000}")"
+  return 0
 }
 
 # Place the terminal for a preset, then report the region actually captured.
@@ -222,8 +262,9 @@ place_and_region() {
   w="${geo%%x*}"; h="${geo#*x}"; h="${h%%+*}"
   x="${geo#*+}"; y="${x#*+}"; x="${x%%+*}"
   hyprctl clients -j 2>/dev/null | grep -q '"class": "floatterm"' || return 1
+  local before; before="$(term_region)"
   fit_terminal "$w" "$h" "$x" "$y"
-  wait_for_terminal || return 1
+  wait_for_terminal "$before" || return 1
   term_region
 }
 
@@ -345,7 +386,7 @@ case "${1:-}" in
     open_image "$out"
     exit 0 ;;
   -h|--help)
-    sed -n '3,60p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,66p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
 esac
 
@@ -401,9 +442,8 @@ OUT="$CAPTURE_DIR/$(date +%F-%H%M%S).mp4"
 #                  coloured text but High 4:4:4 Predictive has poor mobile
 #                  support, and these files go straight to a phone app.
 # -cr limited      players assume limited range; full range looks washed out.
-gpu-screen-recorder "${TARGET[@]}" \
-  -f "$FPS" -k h264 -encoder cpu -bm cbr -q 15000 -cr limited -cursor no \
+gpu-screen-recorder "${TARGET[@]}" -f "$FPS" "${GSR_FLAGS[@]}" \
   -o "$OUT" >/dev/null 2>&1 &
 
 echo $! > "$PIDFILE"
-notify "recording $WHAT @ ${FPS}fps → $(basename "$OUT")"
+printf 'rec: recording %s @ %sfps -> %s\n' "$WHAT" "$FPS" "$(basename "$OUT")"
