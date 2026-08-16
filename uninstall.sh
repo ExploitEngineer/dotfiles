@@ -10,7 +10,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hypr desktop terminal shell theme cli git xdg bin)
+PACKAGES=(hypr desktop terminal shell theme cli git xdg)
 
 STOW_FLAGS=(--target "$HOME" --dir "$REPO")
 

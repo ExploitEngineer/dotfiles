@@ -158,43 +158,35 @@ bind(M .. " + mouse_down", hl.dsp.focus({workspace = "e+1"}),
 bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 	"[Workspaces|Navigation|Mouse] previous workspace")
 
--- ── Floating centred terminal ───────────────────────────────────────────────
--- SUPER+T stays the normal tiled terminal. This one uses a dedicated window
--- class so the float/center/size rule in userprefs.lua matches only it.
--- SUPER+SHIFT+T is HyDE's theme selector and SUPER+ALT+T is the pyprland
--- dropdown, so this goes on CTRL.
--- Overrides are set here rather than in the main kitty config so an ordinary
--- terminal is unaffected. Pinning matters because changing font size mid-take
--- leaves a visible jump that cannot be edited out.
---
--- Measured in the actual 1012px recording window, not derived from a formula:
---   font 20 -> 26 rows x 60 cols   (~37.5px line height)
---   font 19 -> 28 rows x 64 cols
---   font 18 -> 30 rows x 68 cols
---   font 17 -> 32 rows x 68 cols   (~30.5px line height)  <- chosen
---   font 16 -> 33 rows x 74 cols
--- 32 rows is the density target; 30.5px line height is about Instagram caption
--- size after the 1.038x upscale. Keep REC_FONT and REC_CELL in
--- ~/.local/bin/rec in step with this, since `rec layout` uses them.
---
--- window_padding_width 18 keeps a small gap between the terminal border and the
--- text, so the border stays visible inside the capture without text bleeding to
--- the frame edge.
-bind(M .. " + CTRL + T",
-	hl.dsp.exec_cmd("kitty --class floatterm --override font_size=17 --override window_padding_width=18"),
-	"[Launcher|Apps] floating terminal for recording (1012px, 32 rows)")
-
 -- ── Screen recording ────────────────────────────────────────────────────────
--- ~/.local/bin/rec wraps gpu-screen-recorder. A bare `rec` starts at 60fps and
--- 1920x1080; pressing it again stops and saves, so one key is a full toggle.
--- Output lands in ~/capture.
+-- gpu-screen-recorder, called directly. Each key is a toggle: pkill stops a run
+-- already in flight, and only when there is none does it start a new one.
 --
--- SUPER+SHIFT+R is HyDE's wallbash mode selector, so the region variant goes on
--- ALT instead.
-bind(M .. " + R", hl.dsp.exec_cmd("rec"),
+-- SIGINT, not SIGTERM or SIGKILL. It is the only signal that makes
+-- gpu-screen-recorder finalise the container; anything else leaves an
+-- unplayable file.
+--
+-- pkill matches on -f with a ^ anchor rather than -x. The process name is 19
+-- characters and the kernel truncates comm to 15, so -x never matches it and
+-- pkill just errors out, which would make every press start a second recording
+-- instead of stopping the first. The anchor keeps -f from matching the shell
+-- that Hyprland spawns to run this line, whose own command line contains the
+-- same string but does not begin with it.
+--
+-- SUPER+SHIFT+R is HyDE's wallbash mode selector, so the audio variant goes on
+-- ALT instead. Recordings land in ~/Videos.
+local function rec(audio)
+	return "pkill -INT -f '^gpu-screen-recorder' || gpu-screen-recorder -w screen -f 60 -k h264"
+		.. audio .. ' -o "$HOME/Videos/$(date +%F-%H%M%S).mp4"'
+end
+
+bind(M .. " + R", hl.dsp.exec_cmd(rec("")),
 	"[Utilities|Screen recording] toggle recording (60fps, fullscreen)")
-bind(M .. " + ALT + R", hl.dsp.exec_cmd("rec region"),
-	"[Utilities|Screen recording] record a dragged region")
+-- aac rather than gpu-screen-recorder's default opus: opus inside mp4 is poorly
+-- supported by phone players and upload targets, the same reason the video side
+-- is h264.
+bind(M .. " + ALT + R", hl.dsp.exec_cmd(rec(" -a default_output -ac aac")),
+	"[Utilities|Screen recording] toggle recording with desktop audio")
 
 -- ── Volume on the function row ──────────────────────────────────────────────
 -- HyDE moved these to F10/F11/F12. As with brightness on F3/F4, the bare
