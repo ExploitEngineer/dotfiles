@@ -175,9 +175,35 @@ bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 --
 -- SUPER+SHIFT+R is HyDE's wallbash mode selector, so the audio variant goes on
 -- ALT instead. Recordings land in ~/Videos.
+--
+-- Every press says what it did. One toast when a run starts, one the moment a
+-- stop is signalled, and one carrying the finished path once the container is
+-- closed. All three share a replace id, so they land in a single slot and
+-- overwrite each other instead of stacking.
+--
+-- The saved toast is fired by the shell that started the recorder, not by the
+-- one that signalled it: only that side can wait for the encoder to finish and
+-- name the file it actually wrote. gpu-screen-recorder exits 0 after
+-- finalising on SIGINT, so a normal stop takes the saved branch and only a
+-- real error takes the failed one.
+local REC_NOTIFY_ID = 5150
+
+local function rec_notify(args)
+	return "notify-send -a rec -r " .. REC_NOTIFY_ID .. " -i media-record " .. args
+end
+
 local function rec(audio)
-	return "pkill -INT -f '^gpu-screen-recorder' || gpu-screen-recorder -w screen -f 60 -k h264"
-		.. audio .. ' -o "$HOME/Videos/$(date +%F-%H%M%S).mp4"'
+	return "if pkill -INT -f '^gpu-screen-recorder'; then "
+		.. rec_notify("-t 2000 'Recording stopped' 'Saving the file'") .. "; "
+		.. "else "
+		.. 'f="$HOME/Videos/$(date +%F-%H%M%S).mp4"; '
+		.. rec_notify([[-t 2000 'Recording started' "${f##*/}"]]) .. "; "
+		.. "if gpu-screen-recorder -w screen -f 60 -k h264" .. audio .. ' -o "$f"; then '
+		.. rec_notify([[-t 4000 'Recording saved' "$f"]]) .. "; "
+		.. "else "
+		.. rec_notify([[-u critical 'Recording failed' "$f"]]) .. "; "
+		.. "fi; "
+		.. "fi"
 end
 
 bind(M .. " + R", hl.dsp.exec_cmd(rec("")),
