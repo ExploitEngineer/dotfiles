@@ -10,10 +10,11 @@ Keeping the patches here means the fix can be reapplied after an update instead 
 
 ```sh
 cd ~
-patch -p1 --forward < ~/dotfiles/patches/0001-keybinds-hint-parse-plaintext.patch
+for p in ~/dotfiles/patches/*.patch; do patch -p1 --forward -r - < "$p"; done
 ```
 
 `--forward` makes the command a no-op if the patch is already applied, so it is safe to rerun after a HyDE update.
+An already-applied patch still exits non-zero and would otherwise drop a `.rej` file next to the target, so `-r -` discards the rejects and keeps a rerun clean.
 
 ## 0001-keybinds-hint-parse-plaintext.patch
 
@@ -41,3 +42,25 @@ All four output formats (`rofi`, `json`, `md`, `dmenu`) were verified working af
 
 This is an upstream bug in Hyprland's JSON serialiser, not in HyDE.
 The patch is a local workaround until it is fixed upstream.
+
+## 0002-grimblast-single-slurp.patch
+
+Fixes every area screenshot asking for the region to be drawn twice.
+
+`SUPER + S`, `SUPER + SHIFT + S` and `SUPER + CTRL + S` all reach `screenshot.sh`, which runs `grimblast copysave area`.
+The copy of `grimblast` that HyDE installs calls `slurp` twice in `area()`:
+
+```sh
+GEOM="$(echo -n "$rects" | slurp -o "${SLURP_ARGS[@]}")"
+# use `|` as separator for stableId label
+choice="$(echo -n "$rects" | slurp "${SLURP_ARGS[@]}" -f "%x,%y %wx%h|%l")"
+```
+
+One keypress therefore opened two region selectors back to back.
+The first selection was then thrown away by the line below them, `[[ -z "$WINDOW" ]] && GEOM="${choice%|*}"`, which overwrites `GEOM` from the second call for any freehand drag.
+That is why the first drag appeared to do nothing and the second one was always what got captured.
+
+Upstream has a single call that carries both the `-o` flag and the label format, and the patch restores it.
+The extra line looks like a bad merge in HyDE's vendored copy: it kept the old geometry-only call and dropped `-o` from the new labelled one.
+
+Verified with a stubbed `slurp` on `PATH`, one invocation for each path where the installed copy made two: a freehand drag captures the drawn region at the requested size, a click on a window captures that window through `grim -T <stableId>`, and cancelling the selection writes no file.

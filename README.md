@@ -108,7 +108,9 @@ Those are program files rather than configuration, so they are not stow packages
 Reapply with `patch -p1 --forward`, which is a no-op if the fix is already present.
 
 See [patches/README.md](patches/README.md).
-Currently one patch, restoring the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
+Two patches currently.
+One restores the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
+The other stops every area screenshot asking for the region to be drawn twice, by restoring `grimblast`'s single `slurp` call.
 
 ## Legacy configuration files
 
