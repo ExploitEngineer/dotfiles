@@ -64,3 +64,16 @@ Upstream has a single call that carries both the `-o` flag and the label format,
 The extra line looks like a bad merge in HyDE's vendored copy: it kept the old geometry-only call and dropped `-o` from the new labelled one.
 
 Verified with a stubbed `slurp` on `PATH`, one invocation for each path where the installed copy made two: a freehand drag captures the drawn region at the requested size, a click on a window captures that window through `grim -T <stableId>`, and cancelling the selection writes no file.
+
+## 0003-swaync-guard-daemon-running.patch
+
+Stops HyDE's wallbash `swaync.sh` leaking a process pair on every theme reload.
+
+The script ends in `swaync-client -R`, which blocks forever when no swaync daemon is listening.
+dunst holds `org.freedesktop.Notifications` on this machine, so swaync can never acquire the name and never starts.
+Every theme reload and wallpaper change therefore leaked a `bash` and a `swaync-client` that never exited.
+Three pairs accumulated in twenty minutes of uptime and the desktop got progressively slower.
+
+Removing the `swaync` package is not a durable fix.
+`Scripts/dots-groups/extra.toml` includes `../dots/swaync.toml`, which declares `pacman = [ "swaync" ]`, so a HyDE update reinstalls it.
+The patch guards on the daemon actually running instead, which holds whether or not the package is present.

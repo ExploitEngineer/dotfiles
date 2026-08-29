@@ -1,0 +1,18 @@
+--- a/.local/share/wallbash/scripts/swaync.sh
++++ b/.local/share/wallbash/scripts/swaync.sh
+@@ -62,4 +62,15 @@
+     sed -i -E "s#border-radius: [0-9]+px;([[:space:]]*/\* hyde:rounding \*/)#border-radius: ${rounding}px;\1#" "$theme_css"
+ fi
+ 
++# Local fix: `swaync-client -R` blocks forever when no swaync daemon is
++# listening, and this script runs on every theme reload and wallpaper change.
++# With dunst holding org.freedesktop.Notifications, swaync can never start, so
++# each run leaked a bash + swaync-client pair that never exited. Three
++# accumulated in twenty minutes and the desktop got progressively slower.
++#
++# HyDE reinstalls the swaync package on every update via
++# Scripts/dots-groups/extra.toml, so removing the package is not durable.
++# Guard on the daemon actually running instead.
++command -v swaync-client >/dev/null 2>&1 || exit 0
++pgrep -x swaync >/dev/null 2>&1 || exit 0
+ swaync-client -R && swaync-client -rs

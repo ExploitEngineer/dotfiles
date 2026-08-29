@@ -148,7 +148,7 @@ Those are program files rather than configuration, so they are not stow packages
 Reapply with `patch -p1 --forward`, which is a no-op if the fix is already present.
 
 See [patches/README.md](patches/README.md).
-Two patches currently.
+Three patches currently.
 One restores the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
 The other stops every area screenshot asking for the region to be drawn twice, by restoring `grimblast`'s single `slurp` call.
 
@@ -167,8 +167,11 @@ HyDE's wallbash script `~/.local/share/wallbash/scripts/swaync.sh` ends in `sway
 That script runs on every theme reload and every wallpaper change, so each one leaks a `bash` and a `swaync-client` process that never exit.
 Three pairs accumulated in twenty minutes of uptime on this machine, and the desktop got progressively slower as they piled up.
 
-Removing the `swaync` package is what fixes it for good.
-With the binary gone, `swaync-client` fails immediately instead of hanging, so the leak cannot come back even after a HyDE restore reinstates the script.
+Removing the `swaync` package is **not** a durable fix, which took a HyDE update to discover.
+`Scripts/dots-groups/extra.toml` includes `../dots/swaync.toml`, and that declares `pacman = [ "swaync" ]`, so `./install.sh -r` reinstalls the package and restores the wallbash script.
+
+The fix that holds is `patches/0003-swaync-guard-daemon-running.patch`, which makes the script exit early unless a swaync daemon is actually running.
+Reapply it after every HyDE update along with the others.
 
 ## Graphics
 
