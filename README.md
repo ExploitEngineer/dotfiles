@@ -11,12 +11,12 @@ Anything byte-identical to upstream is left out, so what remains is the actual c
 |---|---|
 | Distribution | Arch Linux (`linux-lts`) |
 | Hardware | HP ZBook Studio x360 G5 |
-| Compositor | Hyprland 0.56.0 |
+| Compositor | Hyprland 0.56.2 |
 | Framework | HyDE, Lua configuration mode |
 | Shell | zsh |
 | Bar | waybar |
 | Launcher | rofi |
-| Notifications | dunst |
+| Notifications | dunst (see [Notifications](#notifications)) |
 
 ## Layout
 
@@ -26,13 +26,13 @@ Each mirrors the path it targets under `$HOME`, so a package can be installed or
 ```
 dotfiles/
 ├── hypr/       .config/hypr        hyprland.lua, hyprlock, hyprsunset, pyprland
-├── desktop/    .config/waybar      bar layout and user styling
+├── desktop/    .config/waybar      bar layout, browser flags
 ├── terminal/   .config/tmux        tmux
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
 ├── theme/      gtk, qt, xsettings  toolkit theming
 ├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
-├── xdg/        mimeapps.list       default application handlers
+├── xdg/        mimeapps.list       default handlers, environment.d
 └── patches/                        fixes for HyDE-owned program files
 ```
 
@@ -62,6 +62,23 @@ Remove the symlinks again, leaving this repository untouched:
 
 ```sh
 ./uninstall.sh
+```
+
+### The working copy is not stowed
+
+`install.sh` symlinks these packages into `$HOME` with GNU stow, but on the machine this repository was built from, nothing under `~/.config` is a symlink.
+Every live file is a plain copy, so edits made in place never reach the repository and have to be copied back out by hand.
+
+That is not a theoretical problem.
+Six files had silently drifted before the last sync: `btop.conf`, `cava/config`, `waybar/config.jsonc`, `hyprland.lua`, `.Xresources` and `mimeapps.list`.
+
+Until `install.sh` is actually applied, treat this repository as a manual mirror and check for drift before trusting it:
+
+```sh
+for f in $(git ls-files | grep /); do
+  live="$HOME/${f#*/}"
+  [ -f "$live" ] && cmp -s "$live" "$f" || echo "drift: ${f#*/}"
+done
 ```
 
 ## Generated files are not tracked
@@ -112,25 +129,69 @@ Two patches currently.
 One restores the `SUPER + /` keybindings hint menu, which broke because Hyprland 0.56 emits invalid JSON from `hyprctl binds -j`.
 The other stops every area screenshot asking for the region to be drawn twice, by restoring `grimblast`'s single `slurp` call.
 
+## Notifications
+
+HyDE ships both dunst and swaync and lets you pick one.
+dunst is the one in the core package list at `Scripts/pkg_core.lst`; swaync is an optional extra pulled in through `Scripts/dots-groups/extra.toml`.
+This machine uses dunst, and swaync is deliberately not installed.
+
+Having both installed is actively harmful, not merely redundant.
+Only one process can own the `org.freedesktop.Notifications` D-Bus name.
+dunst wins it through its D-Bus activation file, so `swaync.service` fails with `Could not acquire notification name` and systemd restarts it until it hits `start-limit-hit`.
+
+The expensive part is not the failed service.
+HyDE's wallbash script `~/.local/share/wallbash/scripts/swaync.sh` ends in `swaync-client -R`, which blocks forever when no swaync daemon is listening.
+That script runs on every theme reload and every wallpaper change, so each one leaks a `bash` and a `swaync-client` process that never exit.
+Three pairs accumulated in twenty minutes of uptime on this machine, and the desktop got progressively slower as they piled up.
+
+Removing the `swaync` package is what fixes it for good.
+With the binary gone, `swaync-client` fails immediately instead of hanging, so the leak cannot come back even after a HyDE restore reinstates the script.
+
+## Graphics
+
+NVIDIA Quadro P1000 Mobile, 4 GB, driver 580.
+
+**HyDE's environment variables do not reach any process.**
+`~/.local/share/hypr/lua/env.lua` sets `LIBVA_DRIVER_NAME`, `__GLX_VENDOR_LIBRARY_NAME` and `GBM_BACKEND` through `hl.env()`, and `variables.lua` sets `MOZ_ENABLE_WAYLAND` and `ELECTRON_OZONE_PLATFORM_HINT` the same way.
+None of them arrive.
+The compiled config at `~/.local/state/hyde/hyprland.conf` contains zero `env =` lines, and reading `/proc/<pid>/environ` for waybar, kitty and Hyprland itself finds none of these variables set.
+
+Two things defeat the Hyprland-side mechanism even when it works.
+waybar is started by `systemd --user`, not by Hyprland, so a Hyprland `env =` line would never reach it.
+And SDDM starts the session through a login shell, not through the systemd user manager, so `~/.config/environment.d` alone does not reach Hyprland either.
+
+So the variables are declared in the two places that do work, and neither is owned by HyDE:
+
+| File | Covers |
+|---|---|
+| `/etc/environment` | the whole session, via `pam_env` in the SDDM PAM stack, which reaches Hyprland and everything it launches |
+| `~/.config/environment.d/10-nvidia-vaapi.conf` | systemd user units, which is what waybar is |
+
+`GBM_BACKEND=nvidia-drm` is deliberately left out.
+It is no longer recommended on driver 580 and is a known cause of Firefox crashes.
+
+**Hardware video decode was never working.**
+`libva` was installed but `libva-nvidia-driver` was not, so there was no `nvidia_drv_video.so` under `/usr/lib/dri/` and every browser and Electron app decoded video on the CPU.
+This is what "the system is not using the GPU" actually meant; the compositor itself was on the GPU the whole time.
+
+**Browser flags.**
+`brave-beta-flags.conf`, not `brave-flags.conf`.
+`/usr/bin/brave-beta` reads `$XDG_CONFIG_HOME/brave-beta-flags.conf`, and a file under the other name is silently ignored.
+
 ## Legacy configuration files
 
 A HyDE update moved the framework from `.conf` files to a Lua configuration chain.
 `~/.config/hypr/hyprland.conf` is no longer read, which silently orphaned every file it used to source.
 
-These are still tracked as a record of the pre-migration state:
+Nine such files were tracked here as a record of the pre-migration state: `animations.conf`, `hyprland.conf`, `keybindings.conf`, `monitors.conf`, `nvidia.conf`, `shaders.conf`, `userprefs.conf`, `windowrules.conf` and `workflows.conf`.
+None of them had a live counterpart under `~/.config/hypr` any more.
 
-| File | Status |
-|---|---|
-| `keybindings.conf` | inert, 116 bind lines |
-| `windowrules.conf` | inert |
-| `userprefs.conf` | inert, blur and touchpad settings |
-| `monitors.conf` | superseded by `monitors.lua` |
-| `workflows.conf` | inert |
+They have been removed from the working tree.
+The record is not lost: `git log --diff-filter=D -- 'hypr/.config/hypr/*.conf'` finds the commit that removed them, and the files can be read at the commit before it.
 
-`keybindings.conf` is worth a note: it is HyDE's own default template from an older release rather than a personalised file.
-Compared against the shipped default at `~/.local/share/hyde/keybindings.conf` it is 116 lines against 116, and only six bindings differ by intent.
-The rest of the textual diff is HyDE modernising its own commands from `$scrPath/foo.sh` to `hyde-shell foo`.
-So the bindings that changed across the update are upstream churn, not lost personal configuration.
+`nvidia.conf` is the one worth knowing about.
+It held the VA-API and cursor settings, and it had been dead since the migration, which is part of why hardware video decode was never configured.
+Its useful content now lives in `/etc/environment` and `~/.config/environment.d`, described under [Graphics](#graphics).
 
 Active configuration lives in `hyprland.lua`, which loads `keybindings.lua` last so it overrides HyDE's defaults.
 
