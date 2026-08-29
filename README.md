@@ -118,6 +118,29 @@ Both are restored to their previous positions.
 HyDE ships a `blue-light-filter` screen shader and enables `hyprsunset`, which together tint the display.
 The shader is set to `disable` and hyprsunset is left at a neutral 6500K.
 
+**Two boot changes that look sensible and are not.**
+Both were tried on 2026-08-29 and both broke the machine.
+
+`DisplayServer=wayland` in `/etc/sddm.conf.d/`.
+SDDM cannot bring up a Wayland greeter here, falls back to `sddm-helper-start-x11user`, and that Xorg segfaults inside `libGLX_nvidia.so.0`.
+The greeter then dies and respawns forever, which presents as being thrown back to the login screen over and over, and as a correct password being refused once `pam_faillock` counts the crashed authentications as failures.
+The X11 greeter works fine; leave it alone.
+The only thing the change buys is 63 MiB of VRAM from the `-noreset` Xorg that SDDM leaves resident.
+
+`MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)` in `/etc/mkinitcpio.conf`.
+The `modconf` hook then pulls in all 206 MB of `/usr/lib/firmware/nvidia`, producing a 298 MB initramfs against a normal 122 MB.
+On this laptop that hangs the boot at a black screen followed by a white screen.
+It is also redundant: `HOOKS` already contains `kms`, which handles KMS module loading, and `nvidia_drm.modeset=1` on the kernel command line is what Hyprland actually needs.
+
+Known-good kernel command line:
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
+```
+
+`nvidia_drm.fbdev=1` adds nothing here.
+`quiet` must not be combined with `loglevel=7`, since it pins the console loglevel to 4 and whichever parses last wins.
+
 ## Patches
 
 `patches/` holds fixes for files HyDE installs and owns under `~/.local/lib/hyde`.
