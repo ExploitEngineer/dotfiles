@@ -329,32 +329,55 @@ Both are in `desktop/` and both contain:
 --disable-features=UseChromeOSDirectVideoDecoder
 ```
 
-### NVIDIA 580.178.04 regression
+### BAR1 exhaustion: why browsers crash the whole desktop
 
-Pages freeze mid-scroll and the Brave renderer dies. It is a driver bug, not a browser one.
+The Quadro P1000 is Pascal GP107 with **BAR1 = 256 MiB and no resizable BAR**.
+BAR1 is the only CPU-mappable window into the 4 GB of VRAM, and on Pascal it cannot be enlarged.
 
-```
-NvKmsKapiMemory map failure   ->   +20-30ms   ->   renderer SIGILL
-```
+Under Chromium GPU workload that address space exhausts, `__nv_drm_gem_nvkms_map` then requests a range past the BAR boundary, and the kernel rejects it.
+That is the `Failed to map NvKmsKapiMemory` in the journal.
+It is documented upstream as [NVIDIA/open-gpu-kernel-modules#1134](https://github.com/NVIDIA/open-gpu-kernel-modules/issues/1134).
 
-`__nv_drm_gem_nvkms_map` fails, and 20 to 30 milliseconds later the renderer aborts on the buffer it could not map.
-Seven errors, seven crashes, one to one, driver first every time.
-The crash is `SIGILL` because Chromium's `IMMEDIATE_CRASH()` compiles to `ud2`, so it reads like an illegal instruction rather than what it is, a failed assertion on a bad buffer.
-
-The cause is the upgrade on 2026-08-27:
+The failure escalates:
 
 ```
-13:08  nvidia-580xx-utils / -dkms   580.173.02 -> 580.178.04
-19:41  first NvKmsKapiMemory error
+BAR1 VA exhausted
+  -> Failed to map NvKmsKapiMemory        single tab freezes
+  -> Xid 32 corrupted push buffer         every GPU client at once
+  -> Hyprland SIGABRT                     desktop dies, hard power-off
 ```
 
-Zero errors across eight boots and three days on 580.173.02; every occurrence since.
-`nvidia-580xx` is the legacy branch and the Quadro P1000 is Pascal, dropped from 590 onwards, so there is no newer driver to move to.
+On 2026-08-29 the escalated form fired: 135 Xid 32 errors in one instant across kitty, brave, Xwayland, Xorg, Hyprland and a udev-worker.
 
-`--disable-gpu-memory-buffer-video-frames` in `brave-beta-flags.conf` is the current mitigation.
-It keeps native Wayland and only stops Chromium allocating video frames through the buffer path the driver fails on.
-If it proves insufficient, `--ozone-platform=x11` avoids the compositor dma-buf path entirely at the cost of native Wayland.
-The real fix is downgrading to 580.173.02, which needs an AUR rebuild since `nvidia-580xx` comes from chaotic-aur and nothing is cached locally.
+**Do not enable VA-API on this card.**
+Every decoded frame costs another BAR1 mapping on a window that is already the bottleneck, and turning it on is what took the failure from frozen tabs to a dead compositor.
+`nvidia-vaapi-driver`'s own README calls Chromium support experimental with "not much success".
+Its EGL backend is broken on drivers 525 and later, so `NVD_BACKEND=egl` is not a safe fallback either; `direct` is the only working backend and it is the one that failed here.
+
+Video therefore decodes on CPU. That is the correct trade on a 256 MiB BAR1.
+
+The browser flags in `desktop/` keep GPU rendering and rasterization enabled, which is what makes 3D and animated pages fast, while removing the per-frame mappings:
+
+| Flag | Why |
+|---|---|
+| `--disable-features=AcceleratedVideoDecodeLinuxZeroCopyGL` | zero-copy maps a GPU buffer per frame straight into BAR1, the largest single source of pressure |
+| `--disable-gpu-memory-buffer-video-frames` | stops video frames being allocated as mapped GPU memory buffers |
+| `--ozone-platform-hint=auto` | native Wayland, unrelated to the fault |
+
+Check flag names against the binary before adding any more.
+`VaapiVideoDecodeLinuxGL` was set here for a while and does not exist in Brave 152:
+
+```sh
+grep -ac -- "SomeFeatureName" /opt/brave.com/brave-beta/brave
+```
+
+If a crash ever recurs, `--ozone-platform=x11` drops Brave to XWayland and avoids the compositor buffer path entirely.
+
+Watch for recurrence with:
+
+```sh
+journalctl -b -q | grep -c "NVRM: Xid"
+```
 
 ### Kernel command line
 
