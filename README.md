@@ -161,7 +161,21 @@ GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
 `hyde/.config/hyde/wallbash/scripts/mpvpaper.sh` wires it into HyDE's own wallpaper selection instead.
 
 **It needs no keybind.**
-`~/.config/hyde/wallbash/always/` runs on every wallpaper and theme change, so `SUPER + SHIFT + W` and `SUPER + ALT + Left/Right` already drive it.
+`~/.config/hyde/wallbash/always/` runs on every *global* wallpaper set, which is what all three HyDE wallpaper keybinds use, so they already drive it:
+
+| Keybind | Command |
+|---|---|
+| `SUPER + ALT + Right` | `hyde-shell wallpaper -Gn` |
+| `SUPER + ALT + Left` | `hyde-shell wallpaper -Gp` |
+| `SUPER + SHIFT + W` | `wallpaper -GS` |
+
+The `-G` matters.
+`color.set.sh` is only called when `set_as_global` is true (`wallpaper/core.sh:73`), so a plain `hyde-shell wallpaper --next` changes the image but skips the entire colour pass and no `always/` script runs at all.
+That is worth knowing before scripting wallpaper changes by hand, and it is easy to misread as the hook being broken.
+
+**It does not run at login.**
+`start_up.lua:15` restores the wallpaper without a global colour pass, so no `always/` script runs on session start and the video does not resume after a reboot until a wallpaper key is pressed once.
+Verified by mtimes: Hyprland started 15:05:44 and `wall.dcol` was refreshed at 15:05:48, but `~/.config/cava/config` stayed at 15:02:03.
 
 To use it, put a video next to a still of the same basename in a theme's wallpapers directory:
 
