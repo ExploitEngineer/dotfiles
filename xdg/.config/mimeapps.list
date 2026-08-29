@@ -13,6 +13,8 @@ x-scheme-handler/postman=Postman.desktop
 application/pdf=org.gnome.Papers.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/claude=claude.desktop
+x-scheme-handler/notion=notion.desktop
+text/plain=nvim.desktop
 
 [Added Associations]
 application/pdf=org.gnome.Papers.desktop;
