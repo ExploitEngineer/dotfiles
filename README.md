@@ -64,6 +64,19 @@ Remove the symlinks again, leaving this repository untouched:
 ./uninstall.sh
 ```
 
+### System files this repository cannot hold
+
+Stow only writes into `$HOME`, so three things have to be recreated by hand on a fresh machine.
+All three are documented with their exact contents:
+
+| File | Documented under |
+|---|---|
+| `/etc/environment` | [Graphics](#graphics) |
+| `/etc/default/grub` kernel command line | [Graphics](#graphics), [Machine-specific notes](#machine-specific-notes) |
+| `/etc/systemd/journald.conf.d/00-size.conf` | `SystemMaxUse=500M`, or the journal grows unbounded |
+
+Also install `libva-nvidia-driver` and `libva-utils`, and enable `fstrim.timer`, which is off by default on Arch.
+
 ### The working copy is not stowed
 
 `install.sh` symlinks these packages into `$HOME` with GNU stow, but on the machine this repository was built from, nothing under `~/.config` is a symlink.
@@ -175,34 +188,118 @@ Reapply it after every HyDE update along with the others.
 
 ## Graphics
 
-NVIDIA Quadro P1000 Mobile, 4 GB, driver 580.
+NVIDIA Quadro P1000 Mobile (GP107GLM), 4 GB, driver 580, `nvidia-580xx-dkms` from chaotic-aur.
+Single GPU: there is no Intel iGPU visible to the OS on this machine, so nothing here is about hybrid graphics or PRIME offload.
 
-**HyDE's environment variables do not reach any process.**
+This section is the whole story, so it does not have to be rediscovered or re-explained.
+
+### The GPU was never the problem
+
+Rendering has always been on the Quadro.
+Hyprland, kitty, Brave and Xwayland all hold memory on it, Hyprland runs on the `drm` backend against the NVIDIA module, and Brave's GPU process opens `/dev/dri/renderD128`.
+
+What was missing is **hardware video decode**.
+`libva` was installed but `libva-nvidia-driver` was not, so there was no `nvidia_drv_video.so` under `/usr/lib/dri/`, and every browser and Electron app decoded video on the CPU.
+That is what "the system is not using the GPU" actually meant: high CPU on video, fans, heat.
+It was structurally impossible for `utilization.decoder` to leave 0.
+
+### HyDE's environment mechanism emits nothing
+
 `~/.local/share/hypr/lua/env.lua` sets `LIBVA_DRIVER_NAME`, `__GLX_VENDOR_LIBRARY_NAME` and `GBM_BACKEND` through `hl.env()`, and `variables.lua` sets `MOZ_ENABLE_WAYLAND` and `ELECTRON_OZONE_PLATFORM_HINT` the same way.
 None of them arrive.
-The compiled config at `~/.local/state/hyde/hyprland.conf` contains zero `env =` lines, and reading `/proc/<pid>/environ` for waybar, kitty and Hyprland itself finds none of these variables set.
+The compiled config at `~/.local/state/hyde/hyprland.conf` contains **zero** `env =` lines, and reading `/proc/<pid>/environ` for waybar, kitty and Hyprland itself finds none of these variables set.
 
-Two things defeat the Hyprland-side mechanism even when it works.
+Do not try to fix this by editing `env.lua` or by adding `hl.env()` calls to `userprefs.lua`.
+Both go through the same mechanism and both do nothing.
+
+Two further things defeat the Hyprland-side approach even where it works.
 waybar is started by `systemd --user`, not by Hyprland, so a Hyprland `env =` line would never reach it.
-And SDDM starts the session through a login shell, not through the systemd user manager, so `~/.config/environment.d` alone does not reach Hyprland either.
+And SDDM starts the session through a login shell rather than the systemd user manager, so `~/.config/environment.d` alone does not reach Hyprland either.
 
-So the variables are declared in the two places that do work, and neither is owned by HyDE:
+### Where the variables actually live
 
-| File | Covers |
-|---|---|
-| `/etc/environment` | the whole session, via `pam_env` in the SDDM PAM stack, which reaches Hyprland and everything it launches |
-| `~/.config/environment.d/10-nvidia-vaapi.conf` | systemd user units, which is what waybar is |
+Two files, because neither one covers both cases.
+Only the second is in this repository; `/etc/environment` is a system file and has to be recreated by hand.
 
-`GBM_BACKEND=nvidia-drm` is deliberately left out.
+| File | In repo | Covers |
+|---|---|---|
+| `/etc/environment` | no | the whole session, via `session required pam_env.so` in `/etc/pam.d/system-auth`, which `/etc/pam.d/sddm` includes. Reaches Hyprland and everything it launches. |
+| `~/.config/environment.d/10-nvidia-vaapi.conf` | `xdg/` | systemd user units, which is what waybar is |
+
+Both contain the same five lines:
+
+```sh
+LIBVA_DRIVER_NAME=nvidia
+NVD_BACKEND=direct
+__GLX_VENDOR_LIBRARY_NAME=nvidia
+MOZ_ENABLE_WAYLAND=1
+ELECTRON_OZONE_PLATFORM_HINT=auto
+```
+
+`GBM_BACKEND=nvidia-drm` is deliberately **not** set.
 It is no longer recommended on driver 580 and is a known cause of Firefox crashes.
 
-**Hardware video decode was never working.**
-`libva` was installed but `libva-nvidia-driver` was not, so there was no `nvidia_drv_video.so` under `/usr/lib/dri/` and every browser and Electron app decoded video on the CPU.
-This is what "the system is not using the GPU" actually meant; the compositor itself was on the GPU the whole time.
+### Packages
 
-**Browser flags.**
-`brave-beta-flags.conf`, not `brave-flags.conf`.
-`/usr/bin/brave-beta` reads `$XDG_CONFIG_HOME/brave-beta-flags.conf`, and a file under the other name is silently ignored.
+```sh
+sudo pacman -S --needed libva-nvidia-driver libva-utils
+```
+
+`libva-nvidia-driver` provides `/usr/lib/dri/nvidia_drv_video.so`, which is the whole fix.
+`libva-utils` provides `vainfo` and is only needed to verify.
+
+### Browser flags
+
+The filename matters.
+`/usr/bin/brave-beta` reads `$XDG_CONFIG_HOME/brave-beta-flags.conf`, so a file named `brave-flags.conf` is silently ignored and nothing tells you.
+Chrome reads `chrome-flags.conf`.
+Both are in `desktop/` and both contain:
+
+```
+--ozone-platform-hint=auto
+--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncodeLinuxGL,AcceleratedVideoDecodeLinuxGL
+--disable-features=UseChromeOSDirectVideoDecoder
+```
+
+### Kernel command line
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
+```
+
+`nvidia_drm.modeset=1` is required by Hyprland and must stay.
+See [Machine-specific notes](#machine-specific-notes) for `nvidia_drm.fbdev=1`, mkinitcpio `MODULES` and the SDDM display server, all of which look like reasonable additions here and all of which break this laptop.
+
+### Verifying
+
+```sh
+vainfo | grep -E "Driver version|VAProfileH264High|VAProfileVP9Profile0"
+```
+
+Expect `VA-API NVDEC driver [direct backend]` and a list of `VAEntrypointVLD` profiles.
+If it reports a different driver or fails outright, `libva-nvidia-driver` is missing or `LIBVA_DRIVER_NAME` is not reaching the process.
+
+Confirm the variables actually arrive somewhere that is not your shell, since a shell can inherit them by other routes:
+
+```sh
+tr '\0' '\n' < /proc/$(pgrep -x waybar)/environ | grep -iE "LIBVA|NVD_BACKEND"
+```
+
+Watch decode do real work.
+`utilization.decoder` stays at 0 until a video actually plays, and VA-API drivers load lazily, so an idle check proves nothing:
+
+```sh
+watch -n1 nvidia-smi --query-gpu=utilization.gpu,utilization.decoder,memory.used --format=csv
+```
+
+In Brave, `brave://gpu` should report **Video Decode: Hardware accelerated**.
+
+Day to day the GPU is already on the bar: `custom/gpuinfo` sits in `group/pill#left1` and its tooltip gives temperature, utilisation and clocks.
+`btop` has an NVIDIA panel too, toggled with `5`.
+Neither shows decode; `nvtop` does, with dedicated DEC and ENC columns.
+
+The tooltip's `Power Usage: [N/A]/[N/A] W` is not a fault.
+The P1000 Mobile does not expose `power.draw` to nvidia-smi.
 
 ## Legacy configuration files
 
