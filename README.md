@@ -33,6 +33,7 @@ dotfiles/
 ├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default handlers, environment.d
+├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
 └── patches/                        fixes for HyDE-owned program files
 ```
 
@@ -153,6 +154,42 @@ GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
 
 `nvidia_drm.fbdev=1` adds nothing here.
 `quiet` must not be combined with `loglevel=7`, since it pins the console loglevel to 4 and whichever parses last wins.
+
+## Video wallpapers
+
+`mpvpaper` plays a video as the wallpaper, but on its own it needs the filename and a row of flags every time, and it knows nothing about themes.
+`hyde/.config/hyde/wallbash/scripts/mpvpaper.sh` wires it into HyDE's own wallpaper selection instead.
+
+**It needs no keybind.**
+`~/.config/hyde/wallbash/always/` runs on every wallpaper and theme change, so `SUPER + SHIFT + W` and `SUPER + ALT + Left/Right` already drive it.
+
+To use it, put a video next to a still of the same basename in a theme's wallpapers directory:
+
+```
+~/.config/hyde/themes/Code Garden/wallpapers/aurora.png   <- select this
+~/.config/hyde/themes/Code Garden/wallpapers/aurora.mp4   <- this plays
+```
+
+Selecting the still is what matters.
+wallbash reads its colours from the still, then the hook starts the video over the top, so theming keeps working exactly as before.
+Select a wallpaper with no matching video and mpvpaper is stopped, leaving the ordinary awww wallpaper.
+The still is both the poster frame and the source of truth for colours.
+
+`.mp4`, `.webm` and `.mkv` are recognised.
+
+### Notes
+
+The pointer to the current wallpaper is `$HYDE_CACHE_HOME/wall.set`, a symlink that `wallpaper.sh:77` calls `wallCur`.
+Do not use `wall.awww.png` for this: it only exists for some themes, and where it does exist it is sometimes a real file rather than a symlink, so resolving it returns its own path.
+
+`hwdec=auto-safe`, not `hwdec=nvdec`.
+It resolves to nvdec on this machine, but the Quadro P1000 is Pascal and has no AV1 decoder, so a pinned `nvdec` would fail outright on an AV1 file instead of falling back to software.
+Prefer H.264 or HEVC anyway, both of which are real NVDEC here, as is VP9.
+
+`-p -a MAX` pauses playback whenever the wallpaper is covered, which on a laptop is most of the time.
+
+Measured on a 1080p30 clip: `utilization.decoder` around 5 percent and roughly 417 MiB of VRAM.
+That VRAM figure is worth remembering on a 4 GB card.
 
 ## Patches
 
