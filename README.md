@@ -329,6 +329,33 @@ Both are in `desktop/` and both contain:
 --disable-features=UseChromeOSDirectVideoDecoder
 ```
 
+### NVIDIA 580.178.04 regression
+
+Pages freeze mid-scroll and the Brave renderer dies. It is a driver bug, not a browser one.
+
+```
+NvKmsKapiMemory map failure   ->   +20-30ms   ->   renderer SIGILL
+```
+
+`__nv_drm_gem_nvkms_map` fails, and 20 to 30 milliseconds later the renderer aborts on the buffer it could not map.
+Seven errors, seven crashes, one to one, driver first every time.
+The crash is `SIGILL` because Chromium's `IMMEDIATE_CRASH()` compiles to `ud2`, so it reads like an illegal instruction rather than what it is, a failed assertion on a bad buffer.
+
+The cause is the upgrade on 2026-08-27:
+
+```
+13:08  nvidia-580xx-utils / -dkms   580.173.02 -> 580.178.04
+19:41  first NvKmsKapiMemory error
+```
+
+Zero errors across eight boots and three days on 580.173.02; every occurrence since.
+`nvidia-580xx` is the legacy branch and the Quadro P1000 is Pascal, dropped from 590 onwards, so there is no newer driver to move to.
+
+`--disable-gpu-memory-buffer-video-frames` in `brave-beta-flags.conf` is the current mitigation.
+It keeps native Wayland and only stops Chromium allocating video frames through the buffer path the driver fails on.
+If it proves insufficient, `--ozone-platform=x11` avoids the compositor dma-buf path entirely at the cost of native Wayland.
+The real fix is downgrading to 580.173.02, which needs an AUR rebuild since `nvidia-580xx` comes from chaotic-aur and nothing is cached locally.
+
 ### Kernel command line
 
 ```
