@@ -10,3 +10,9 @@
 * text=auto eol=lf
 *.png binary
 *.svg binary
+
+# cava's config carries a wallbash-generated colour block that HyDE rewrites on
+# every wallpaper change. The clean filter strips it on staging so the block
+# never enters a commit. install.sh registers the filter; without it git treats
+# the name as identity and nothing breaks, the block simply is not stripped.
+cli/.config/cava/config filter=wallbash-strip

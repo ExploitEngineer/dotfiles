@@ -94,3 +94,7 @@ __pycache__/
 # ---- OS noise -------------------------------------------------------------
 .DS_Store
 Thumbs.db
+
+# Entirely HyDE-generated: theme.switch.sh:199-205 writes both Xcursor.theme and
+# Xcursor.size from the active theme, so there is nothing here that is mine.
+.Xresources

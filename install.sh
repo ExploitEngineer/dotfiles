@@ -10,7 +10,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hypr desktop terminal shell theme cli git xdg hyde)
+PACKAGES=(hypr desktop terminal shell cli git xdg hyde)
 
 STOW_FLAGS=(--target "$HOME" --dir "$REPO")
 DRY_RUN=0
@@ -30,6 +30,14 @@ command -v stow >/dev/null 2>&1 || {
   echo "error: GNU stow is not installed. Run: sudo pacman -S stow" >&2
   exit 1
 }
+
+# cava's config carries a wallbash-generated colour block that HyDE rewrites on
+# every wallpaper change. This clean filter strips it on staging so it never
+# enters a commit. Filters live in .git/config, which is not cloned, so it has
+# to be registered here rather than committed.
+git -C "$REPO" config filter.wallbash-strip.clean \
+  "sed '/### Auto generated wallbash colors ###/,\$d'"
+git -C "$REPO" config filter.wallbash-strip.smudge cat
 
 for pkg in "${PACKAGES[@]}"; do
   [ -d "$REPO/$pkg" ] || { echo "skip: no such package '$pkg'"; continue; }

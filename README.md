@@ -29,7 +29,6 @@ dotfiles/
 ├── desktop/    .config/waybar      bar layout, browser flags
 ├── terminal/   .config/tmux        tmux
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
-├── theme/      gtk, qt, xsettings  toolkit theming
 ├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default handlers, environment.d
@@ -89,11 +88,16 @@ Six files had silently drifted before the last sync: `btop.conf`, `cava/config`,
 Until `install.sh` is actually applied, treat this repository as a manual mirror and check for drift before trusting it:
 
 ```sh
-for f in $(git ls-files | grep /); do
+strip() { sed '/### Auto generated wallbash colors ###/,$d' "$1"; }
+for f in $(git ls-files | grep / | grep -v '^patches/'); do
   live="$HOME/${f#*/}"
-  [ -f "$live" ] && cmp -s "$live" "$f" || echo "drift: ${f#*/}"
+  [ -f "$live" ] || { echo "missing: ${f#*/}"; continue; }
+  diff -q <(strip "$live") <(strip "$f") >/dev/null || echo "drift: ${f#*/}"
 done
 ```
+
+`strip` drops the wallbash block so a wallpaper change does not read as drift.
+`patches/` is skipped because those files are deployed by `patch`, not by stow, so they have no counterpart under `$HOME`.
 
 ## Generated files are not tracked
 
@@ -102,6 +106,19 @@ Tracking that output would produce a diff on every theme change and would be ove
 
 Excluded for that reason: `hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, and the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum` and `vim`.
 Compiled shader and zsh completion caches are excluded too.
+
+Two files needed more than a gitignore entry, because both looked like ordinary configuration:
+
+`.Xresources` is gone entirely, and the `theme/` package with it.
+Both of its lines, `Xcursor.theme` and `Xcursor.size`, are written by `theme.switch.sh:199-205` from the active theme, so none of it was ever mine.
+It changed on every theme switch and showed as drift each time.
+
+`cava/config` is kept, because the first 330 lines are real configuration, but everything from `### Auto generated wallbash colors ###` down is wallbash output that `cava.sh:23` deletes and regenerates on every wallpaper change.
+The tracked copy is truncated at that marker, and a `clean` filter declared in `.gitattributes` strips the block on staging so it cannot come back.
+`cava.sh` re-appends the marker when it is missing, so a fresh checkout recovers on the first wallpaper set.
+
+Git filters live in `.git/config`, which is not cloned, so `install.sh` registers this one.
+Without it git treats the filter name as identity: nothing breaks, the block simply is not stripped.
 
 ## Machine-specific notes
 
