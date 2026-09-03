@@ -198,7 +198,14 @@ local function rec(audio)
 		.. "else "
 		.. 'f="$HOME/Videos/$(date +%F-%H%M%S).mp4"; '
 		.. rec_notify([[-t 2000 'Recording started' "${f##*/}"]]) .. "; "
-		.. "if gpu-screen-recorder -w screen -f 60 -k h264" .. audio .. ' -o "$f"; then '
+		-- -fallback-cpu-encoding: NVENC is unavailable since 2026-08-27, when
+		-- ffmpeg went 8.1.2 -> 9.0.1 in the same upgrade as nvidia 580.178.04.
+		-- ffmpeg 9 needs nvenc api 13.1, the driver exposes 13.0, so gsr reports
+		-- "selected video codec h264 is not supported by your hardware" and exits
+		-- immediately. The flag keeps NVENC preferred and only falls back to
+		-- libx264 when it is missing, so hardware encoding resumes by itself if a
+		-- later driver ships 13.1.
+		.. "if gpu-screen-recorder -w screen -f 60 -k h264 -fallback-cpu-encoding yes" .. audio .. ' -o "$f"; then '
 		.. rec_notify([[-t 4000 'Recording saved' "$f"]]) .. "; "
 		.. "else "
 		.. rec_notify([[-u critical 'Recording failed' "$f"]]) .. "; "
