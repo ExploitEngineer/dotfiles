@@ -69,6 +69,15 @@ for k, v in pairs(per_theme[theme] or {}) do
 end
 
 hl.config({
+	-- Mouse resize by dragging a window edge. 1-Bit is the only theme of the 43
+	-- that sets this to false, which silently removes edge-drag resize whenever
+	-- it is active. Pinned true here so the behaviour does not depend on which
+	-- theme is loaded. The grab area is extend_border_grab_area (15px default),
+	-- so a theme's border_size does not have to be large for this to be usable.
+	general = {
+		resize_on_border = true,
+	},
+
 	decoration = {
 		-- Opacity is the reason blur looked absent on some themes, not the blur
 		-- settings themselves. Blur is enabled by all 43 themes, but several set
