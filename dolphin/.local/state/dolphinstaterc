@@ -1,0 +1,16 @@
+[FilterBar]
+caseSensitive=false
+filterMode=1
+
+[SettingsDialog]
+2560x1080 screen: Window-Maximized=true
+
+[State]
+1500x1000 screen: Window-Maximized=true
+1920x1080 screen: Window-Maximized=true
+2 screens: Window-Maximized=true
+2560x1080 screen: Window-Maximized=true
+3 screens: Height=768
+3 screens: Width=1366
+3 screens: Window-Maximized=true
+State=AAAA/wAAAAD9AAAAAwAAAAAAAACTAAAD4PwCAAAAAfsAAAAWAGYAbwBsAGQAZQByAHMARABvAGMAawAAAAAA/////wAAAAAA////AAAAAQAAAQsAAAJ7/AIAAAAC+wAAABQAcABsAGEAYwBlAHMARABvAGMAawEAAAAAAAAA6gAAAEEA////+wAAABAAaQBuAGYAbwBEAG8AYwBrAQAAAPEAAAGKAAAA3wD///8AAAADAAAC+wAAACb8AQAAAAH7AAAAGAB0AGUAcgBtAGkAbgBhAGwARABvAGMAawAAAAAAAAAC+wAAAAAA////AAABwgAAAnsAAAAEAAAABAAAAAgAAAAI/AAAAAEAAAABAAAAAQAAABYAbQBhAGkAbgBUAG8AbwBsAEIAYQByAwAAAAD/////AAAAAAAAAAA=
