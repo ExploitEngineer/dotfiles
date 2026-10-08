@@ -1,0 +1,9 @@
+$HOME/.config/rofi/theme.rasi
+* {
+    main-bg:            #0B0E12F2;
+    main-fg:            #D6D3CBFF;
+    main-br:            #D6D3CBFF;
+    main-ex:            #1E232BFF;
+    select-bg:          #5C86A8FF;
+    select-fg:          #0B0E12FF;
+}

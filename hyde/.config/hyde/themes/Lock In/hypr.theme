@@ -1,0 +1,48 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
+
+$GTK_THEME = Nordic
+$ICON_THEME = Tela-circle-dark
+$COLOR_SCHEME = prefer-dark
+$CURSOR_THEME = Bibata-Modern-Ice
+$CURSOR_SIZE = 20
+$CODE_THEME = Nord
+
+# Lock In: panel edges, not glass. Hard borders, wide gutters,
+# accent on exactly one window at a time.
+general {
+    gaps_in = 6
+    gaps_out = 14
+    border_size = 2
+    resize_on_border = true
+    col.active_border = rgba(5C86A8ff)
+    col.inactive_border = rgba(2C333Dff)
+}
+
+decoration {
+    rounding = 0
+    active_opacity = 1.0
+    inactive_opacity = 0.94
+
+    blur {
+        enabled = false
+    }
+
+    shadow {
+        enabled = false
+    }
+}
+
+group {
+    col.border_inactive = rgba(2C333Dff)
+    col.border_active = rgba(5C86A8ff)
+
+    groupbar {
+        col.active = rgba(5C86A8ff)
+        col.inactive = rgba(1E232Bff)
+        font_family = JetBrainsMono NFM
+        font_size = 10
+        text_color = rgba(D6D3CBff)
+    }
+}
+
+layerrule = unset,waybar

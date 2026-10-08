@@ -1,0 +1,19 @@
+# Lock In: movement you notice is movement competing with the wallpaper.
+# Short, decelerating, never past the target. No overshoot, no bounce,
+# no rotating accent -- the accent means focus, and focus doesn't spin.
+
+animations {
+    enabled = true
+
+    bezier = lockin, 0.22, 1, 0.36, 1
+    bezier = snap, 0.4, 0, 0.2, 1
+
+    animation = windows, 1, 2.5, lockin, popin 96%
+    animation = windowsOut, 1, 2, snap, popin 96%
+    animation = windowsMove, 1, 2.5, lockin
+    animation = border, 1, 6, snap
+    animation = borderangle, 0, 0, snap
+    animation = fade, 1, 2, snap
+    animation = workspaces, 1, 3, lockin, slide
+    animation = specialWorkspace, 1, 3, lockin, slidevert
+}

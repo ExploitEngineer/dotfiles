@@ -1,0 +1,70 @@
+# Lock In: same rules as the desktop. Zero rounding, two-pixel border,
+# accent on exactly the one thing you're typing into. The wallpaper is
+# dimmed rather than blurred -- contrast does the layering.
+
+background {
+    monitor =
+    path = $BACKGROUND_PATH
+    blur_passes = 0
+    blur_size = 0
+    noise = 0.0
+    contrast = 1.0
+    brightness = 0.55
+    vibrancy = 0.0
+    vibrancy_darkness = 0.0
+}
+
+input-field {
+    monitor =
+    size = 280, 44
+    outline_thickness = 2
+    rounding = 0
+    dots_size = 0.22
+    dots_spacing = 0.3
+    dots_center = true
+    fade_on_empty = false
+    font_family = JetBrainsMono NFM
+    outer_color = rgba(5C86A8ff)
+    inner_color = rgba(14171Cff)
+    font_color = rgba(D6D3CBff)
+    check_color = rgba(B49B76ff)
+    fail_color = rgba(8E4F4Aff)
+    placeholder_text = <span foreground="##7C8590">locked in</span>
+    fail_text = <span foreground="##8E4F4A">$FAIL ($ATTEMPTS)</span>
+    position = 0, -140
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = cmd[update:1000] echo "$(date +'%H:%M')"
+    color = rgba(D6D3CBff)
+    font_size = 96
+    font_family = JetBrainsMono NFM
+    position = 0, 80
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = cmd[update:60000] echo "$(date +'%A %d %B')"
+    color = rgba(7C8590ff)
+    font_size = 14
+    font_family = JetBrainsMono NFM
+    position = 0, 10
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = $USER
+    color = rgba(7C8590ff)
+    font_size = 12
+    font_family = JetBrainsMono NFM
+    position = 0, -60
+    halign = center
+    valign = center
+}
