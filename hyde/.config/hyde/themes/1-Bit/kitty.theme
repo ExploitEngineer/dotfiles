@@ -1,0 +1,46 @@
+$HOME/.config/kitty/theme.conf|killall -SIGUSR1 kitty
+font_family JetBrainsMono Nerd Font
+
+foreground              #FFFFFF
+background              #131313
+selection_foreground    #131313
+selection_background    #FFFFFF
+cursor                  #9D9D9D
+cursor_text_color       #101010
+
+active_tab_foreground     #131313
+active_tab_background     #535353
+inactive_tab_foreground   #535353
+inactive_tab_background   #131313
+
+# black
+color0      #1A1A1A
+color8      #636363
+
+# red
+color1      #FCFCFC
+color9      #D6D6D6
+
+# green
+color2      #FCFCFC
+color10     #D6D6D6
+
+# yellow
+color3      #FCFCFC
+color11     #D6D6D6
+
+# blue
+color4      #B8B8B8
+color12     #B8B8B8
+
+# magenta
+color5      #B8B8B8
+color13     #B8B8B8
+
+# cyan
+color6      #B8B8B8
+color14     #B8B8B8
+
+# white
+color7      #FCFCFC
+color15     #D6D6D6

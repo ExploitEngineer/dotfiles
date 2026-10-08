@@ -1,0 +1,91 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
+
+$GTK_THEME = 1-Bit
+$ICON_THEME = monochrome-icon-set
+$COLOR_SCHEME = prefer-dark
+$CURSOR_THEME = Bibata-Original-Ice
+$CURSOR_SIZE = 24
+$FONT = JetBrains
+
+
+general {
+    border_size = 1
+    no_border_on_floating = false
+    gaps_in = 4
+    gaps_out = 8
+    float_gaps = 4
+    col.active_border = rgba(ffffffff)
+    col.inactive_border = rgba(ffffffff)
+    layout = dwindle
+    no_focus_fallback = false
+    resize_on_border = false
+    allow_tearing = true
+
+    snap {
+        enabled = true
+        window_gap = 4
+        monitor_gap = 8
+        respect_gaps = true
+    }
+}
+
+decoration {
+    rounding = 0
+
+    active_opacity = 1
+    inactive_opacity = 0.95
+    fullscreen_opacity = 1
+
+    dim_inactive = false
+    dim_special = false
+
+    border_part_of_window = true
+
+    blur {
+        enabled = true
+        size = 4
+        passes = 4
+        ignore_opacity = true
+        new_optimizations = true
+        xray = false
+        noise = 0
+        contrast = 1
+        brightness = 1
+        vibrancy = 0
+        special = true
+        popups = true
+    }
+
+    shadow {
+        enabled = enabled
+        range = 10
+        render_power = 2
+        color = rgba(ffffffff)
+        color_inactive = rgba(ffffff00)
+        scale = 1
+    }
+}
+
+group {
+    col.border_inactive = rgba(1a1a1ab0)
+    col.border_active = rgba(ffffffee) rgba(bfbfbfb0) rgba(bfbfbfb0) rgba(ffffffee) 45deg
+
+    groupbar {
+      col.active = rgba(bfbfbfcc)
+      col.inactive = rgba(82828299)
+      font_family = JetBrainsMono NFM
+      font_size = 10
+      text_color = rgba(ffffffff)
+    }
+}
+
+misc {
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+    force_default_wallpaper = 0
+    vfr = true
+
+    mouse_move_enables_dpms = true
+    key_press_enables_dpms = true
+
+}
