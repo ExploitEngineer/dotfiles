@@ -5,6 +5,8 @@ Personal configuration for an Arch Linux and Hyprland desktop running the [HyDE]
 This repository holds only the files that differ from HyDE's shipped defaults.
 Anything byte-identical to upstream is left out, so what remains is the actual customisation rather than a copy of HyDE.
 
+![Desktop overview](assets/screenshots/setup.png)
+
 ## System
 
 | | |
@@ -39,6 +41,18 @@ dotfiles/
 
 Not every configured program appears here.
 kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wallbash output, so there is nothing of mine to track.
+
+## Themes
+
+HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty and dunst all repainted together.
+37 themes are tracked under `hyde/.config/hyde/themes/`; a sample is below.
+`1-Bit` is the one active in the screenshot at the top of this file.
+
+| | | |
+|---|---|---|
+| **1-Bit** <br> ![1-Bit](assets/themes/1-Bit.jpg) | **Rose Pine** <br> ![Rose Pine](assets/themes/Rose-Pine.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha](assets/themes/Catppuccin-Mocha.jpg) |
+| **Oregairu** <br> ![Oregairu](assets/themes/Oregairu.jpg) | **Vanta Black** <br> ![Vanta Black](assets/themes/Vanta-Black.jpg) | **Oxo Carbon** <br> ![Oxo Carbon](assets/themes/Oxo-Carbon.jpg) |
+| **Obsidian Purple** <br> ![Obsidian Purple](assets/themes/Obsidian-Purple.jpg) | **DanDaDan** <br> ![DanDaDan](assets/themes/DanDaDan.jpg) | **Green Lush** <br> ![Green Lush](assets/themes/Green-Lush.jpg) |
 
 ## Install
 
