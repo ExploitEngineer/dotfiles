@@ -45,7 +45,8 @@ kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wall
 ## Themes
 
 HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava and neovim (via `cli/.config/nvim/lua/wallbash_theme.lua`) all repainted together.
-All 37 tracked themes are below, each shown on the same four-pane scene: neovim, Dolphin's home folder, fastfetch and cava.
+All 37 tracked themes are below, each shown live: neovim, Dolphin's home folder, fastfetch and cava.
+The window arrangement itself varies per theme too, between a few hand-picked three and four pane layouts, rather than one fixed template repainted 37 times.
 `1-Bit` is the one active in the screenshot at the top of this file.
 
 | | | |
@@ -63,6 +64,12 @@ All 37 tracked themes are below, each shown on the same four-pane scene: neovim,
 | **Pixel Dream** <br> ![Pixel Dream](assets/themes/Pixel-Dream.jpg) | **Red Stone** <br> ![Red Stone](assets/themes/Red-Stone.jpg) | **Rosé Pine** <br> ![Rosé Pine](assets/themes/Rose-Pine.jpg) |
 | **Scarlet Night** <br> ![Scarlet Night](assets/themes/Scarlet-Night.jpg) | **Soulsborne** <br> ![Soulsborne](assets/themes/Soulsborne.jpg) | **Synth Wave** <br> ![Synth Wave](assets/themes/Synth-Wave.jpg) |
 | **Vanta Black** <br> ![Vanta Black](assets/themes/Vanta-Black.jpg) | | |
+
+The themed `wlogout` power menu, for a few of the themes above:
+
+| | | |
+|---|---|---|
+| **1-Bit** <br> ![1-Bit wlogout](assets/extras/wlogout-1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood wlogout](assets/extras/wlogout-Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine wlogout](assets/extras/wlogout-Rose-Pine.jpg) |
 
 ## Install
 
