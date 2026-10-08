@@ -1,0 +1,74 @@
+$HOME/.config/kitty/theme.conf|killall -SIGUSR1 kitty
+# Chisa color scheme for kitty terminal emulator
+
+foreground #e8d9e3
+background #201b25
+
+# Black
+color0 #363549
+color8 #363549
+
+# Red
+color1 #d2546a
+color9 #d2546a
+
+# Green
+color2  #9b5768
+color10 #9b5768
+
+# Yellow
+color3  #da6a95
+color11 #da6a95
+
+# Blue
+color4  #6c354e
+color12 #6c354e
+
+# Magenta
+color5  #b74258
+color13 #b74258
+
+# Cyan
+color6  #be9eb5
+color14 #be9eb5
+
+# White
+color7  #be9eb5
+color15 #e8d9e3
+
+# Cursor
+cursor #e8d9e3
+cursor_text_color #201b25
+
+# Selection highlight
+selection_foreground none
+selection_background #4d2b35
+
+# The color for highlighting URLs on mouse-over
+url_color #da6a95
+
+# Window borders
+active_border_color #d2546a
+inactive_border_color #363549
+bell_border_color #b74258
+
+# Tab bar
+tab_bar_style fade
+tab_fade 1
+active_tab_foreground   #201b25
+active_tab_background   #d2546a
+active_tab_font_style   bold
+inactive_tab_foreground #be9eb5
+inactive_tab_background #363549
+inactive_tab_font_style bold
+tab_bar_background #201b25
+
+# Title bar
+macos_titlebar_color #201b25
+
+# Optional alternate background tuning
+# background #24283b
+# cursor_text_color #24283b
+# active_tab_background   #1f2335
+# inactive_tab_background #1f2335
+# macos_titlebar_color #1f2335
