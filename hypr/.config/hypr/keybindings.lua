@@ -181,6 +181,13 @@ bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 -- closed. All three share a replace id, so they land in a single slot and
 -- overwrite each other instead of stacking.
 --
+-- The toasts mirror HyDE's own screenrecord.sh: app name "HyDE Alert", which
+-- dunstrc renders as a single bold summary line in the wallbash theme colours
+-- (the body is not shown, so all text goes in the summary), and the saved
+-- toast carries a thumbnail of the recorded screen as its icon. The thumbnail
+-- is grabbed just before recording starts; the previous one is removed then,
+-- because dunst may still be showing it while the saved toast is up.
+--
 -- The saved toast is fired by the shell that started the recorder, not by the
 -- one that signalled it: only that side can wait for the encoder to finish and
 -- name the file it actually wrote. gpu-screen-recorder exits 0 after
@@ -189,15 +196,16 @@ bind(M .. " + mouse_up", hl.dsp.focus({workspace = "e-1"}),
 local REC_NOTIFY_ID = 5150
 
 local function rec_notify(args)
-	return "notify-send -a rec -r " .. REC_NOTIFY_ID .. " -i media-record " .. args
+	return 'notify-send -a "HyDE Alert" -r ' .. REC_NOTIFY_ID .. " " .. args
 end
 
 local function rec(audio)
 	return "if pkill -INT -f '^gpu-screen-recorder'; then "
-		.. rec_notify("-t 2000 'Recording stopped' 'Saving the file'") .. "; "
+		.. rec_notify("-i media-record -t 2000 'Recording stopped, saving the file'") .. "; "
 		.. "else "
 		.. 'f="$HOME/Videos/$(date +%F-%H%M%S).mp4"; '
-		.. rec_notify([[-t 2000 'Recording started' "${f##*/}"]]) .. "; "
+		.. 'rm -f /tmp/hyde-rec-thumb-*.png; t="$(mktemp /tmp/hyde-rec-thumb-XXXXXX.png)"; grim -s 0.25 "$t"; '
+		.. rec_notify([[-i media-record -t 2000 "Recording started: ${f##*/}"]]) .. "; "
 		-- -fallback-cpu-encoding: NVENC is unavailable since 2026-08-27, when
 		-- ffmpeg went 8.1.2 -> 9.0.1 in the same upgrade as nvidia 580.178.04.
 		-- ffmpeg 9 needs nvenc api 13.1, the driver exposes 13.0, so gsr reports
@@ -206,9 +214,11 @@ local function rec(audio)
 		-- libx264 when it is missing, so hardware encoding resumes by itself if a
 		-- later driver ships 13.1.
 		.. "if gpu-screen-recorder -w screen -f 60 -k h264 -fallback-cpu-encoding yes" .. audio .. ' -o "$f"; then '
-		.. rec_notify([[-t 4000 'Recording saved' "$f"]]) .. "; "
+		-- The thumbnail narrows the text column to ~18 characters, so a full
+		-- path wraps into ragged fragments; the start toast already named the file.
+		.. rec_notify([[-i "$t" -t 4000 "Recording saved to ~/Videos"]]) .. "; "
 		.. "else "
-		.. rec_notify([[-u critical 'Recording failed' "$f"]]) .. "; "
+		.. rec_notify([[-i media-record -u critical "Recording failed: $f"]]) .. "; "
 		.. "fi; "
 		.. "fi"
 end

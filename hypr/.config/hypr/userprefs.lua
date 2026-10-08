@@ -103,3 +103,38 @@ hl.config({
 -- The old config also had `blurls = waybar`. That is no longer needed: HyDE
 -- ships a layer rule named hyde_layer_blur in
 -- ~/.local/share/hypr/lua/layer_rules.lua which already blurs the waybar layer.
+
+-- SUPER + T opened kitty straight into fullscreen every time (2026-10-08).
+-- hyprctl's own client JSON pinned it down: the new window reported
+-- fullscreenClient = 1, Hyprland's marker for "the client itself asked for
+-- this", not fullscreen = 1 from a Hyprland-side rule or layout decision.
+-- Confirmed live, twice, by watching `hyprctl clients -j` the instant the
+-- window appeared.
+--
+-- The request traces to how SUPER + T launches kitty, not to kitty.conf
+-- (checked, no fullscreen/start_as directive) or to dwindle (a plain `kitty &`
+-- from a shell never reproduces it, every time). The bind runs
+-- `hyde-shell app -T`, which execs into app2unit, which launches via
+-- `systemd-run --user --scope` through xdg-terminal-exec. Every other app
+-- keybind (SUPER + E for Dolphin, etc.) goes through hyde-shell's plainer
+-- `open` path instead and never shows this. None of the three scripts in
+-- that chain (app.sh, app2unit, xdg-terminal-exec) mention fullscreen
+-- anywhere, so whatever sets this request happens inside systemd-run's scope
+-- launch or xdg-terminal-exec's activation handling, not in a line of shell
+-- that can be pointed at directly.
+--
+-- Rather than chase that interaction further, this suppresses the request at
+-- the one place Hyprland is built to do exactly that: a static window rule
+-- matching on initialClass, since the rule fires before the client's first
+-- fullscreen request is ever honoured.
+--
+-- First attempt only suppressed "fullscreen" and did not fix it (confirmed on
+-- video). SUPER + F's own toggle_fullscreen in hyprland.lua flips between
+-- state 0 and state 2 (maximize), not 1, so the request was maximize even
+-- though the captured JSON read "fullscreen":1. Suppressing both events
+-- together, confirmed fixed 2026-10-08.
+hl.window_rule({
+	name = "kitty-no-autofullscreen",
+	match = { class = "^(kitty)$" },
+	suppress_event = "fullscreen maximize",
+})
