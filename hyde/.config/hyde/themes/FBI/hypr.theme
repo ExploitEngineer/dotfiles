@@ -1,0 +1,40 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
+#  Agency — NSA aesthetic (dark navy / surveillance)
+
+$GTK_THEME=Agency
+$ICON_THEME = Tela-circle-blue
+$COLOR_SCHEME = prefer-dark
+
+
+general {
+    gaps_in = 3
+    gaps_out = 8
+    border_size = 2
+    col.active_border = rgba(3b82f6ff) rgba(11315eff) 45deg
+    col.inactive_border = rgba(16263fff)
+    layout = dwindle
+    resize_on_border = true
+}
+
+group {
+    col.border_active = rgba(3b82f6ff) rgba(11315eff) 45deg
+    col.border_inactive = rgba(16263fff)
+    col.border_locked_active = rgba(c9a227ff) rgba(11315eff) 45deg
+    col.border_locked_inactive = rgba(16263fff)
+}
+
+decoration {
+    rounding = 10
+    shadow:enabled = false
+
+    blur {
+        enabled = yes
+        size = 6
+        passes = 3
+        new_optimizations = on
+        ignore_opacity = on
+        xray = false
+    }
+}
+
+layerrule = blur,waybar
