@@ -5,7 +5,7 @@ Personal configuration for an Arch Linux and Hyprland desktop running the [HyDE]
 This repository holds only the files that differ from HyDE's shipped defaults.
 Anything byte-identical to upstream is left out, so what remains is the actual customisation rather than a copy of HyDE.
 
-![Desktop overview](assets/screenshots/setup.png)
+![Desktop overview](assets/themes/1-Bit.jpg)
 
 ## System
 
@@ -31,7 +31,7 @@ dotfiles/
 ├── desktop/    .config/waybar      bar layout, browser flags
 ├── terminal/   .config/tmux        tmux
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
-├── cli/        btop, cava, ...     fastfetch, htop
+├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default handlers, environment.d
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
@@ -44,15 +44,25 @@ kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wall
 
 ## Themes
 
-HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty and dunst all repainted together.
-37 themes are tracked under `hyde/.config/hyde/themes/`; a sample is below.
+HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava and neovim (via `cli/.config/nvim/lua/wallbash_theme.lua`) all repainted together.
+All 37 tracked themes are below, each shown on the same four-pane scene: neovim, Dolphin's home folder, fastfetch and cava.
 `1-Bit` is the one active in the screenshot at the top of this file.
 
 | | | |
 |---|---|---|
-| **1-Bit** <br> ![1-Bit](assets/themes/1-Bit.jpg) | **Rose Pine** <br> ![Rose Pine](assets/themes/Rose-Pine.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha](assets/themes/Catppuccin-Mocha.jpg) |
-| **Oregairu** <br> ![Oregairu](assets/themes/Oregairu.jpg) | **Vanta Black** <br> ![Vanta Black](assets/themes/Vanta-Black.jpg) | **Oxo Carbon** <br> ![Oxo Carbon](assets/themes/Oxo-Carbon.jpg) |
-| **Obsidian Purple** <br> ![Obsidian Purple](assets/themes/Obsidian-Purple.jpg) | **DanDaDan** <br> ![DanDaDan](assets/themes/DanDaDan.jpg) | **Green Lush** <br> ![Green Lush](assets/themes/Green-Lush.jpg) |
+| **1-Bit** <br> ![1-Bit](assets/themes/1-Bit.jpg) | **Abyssal Wave** <br> ![Abyssal Wave](assets/themes/Abyssal-Wave.jpg) | **Agency** <br> ![Agency](assets/themes/Agency.jpg) |
+| **AncientAliens** <br> ![AncientAliens](assets/themes/AncientAliens.jpg) | **Bad Blood** <br> ![Bad Blood](assets/themes/Bad-Blood.jpg) | **BlueSky** <br> ![BlueSky](assets/themes/BlueSky.jpg) |
+| **Catppuccin Latte** <br> ![Catppuccin Latte](assets/themes/Catppuccin-Latte.jpg) | **Catppuccin Macchiato** <br> ![Catppuccin Macchiato](assets/themes/Catppuccin-Macchiato.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha](assets/themes/Catppuccin-Mocha.jpg) |
+| **Chisa** <br> ![Chisa](assets/themes/Chisa.jpg) | **CIA** <br> ![CIA](assets/themes/CIA.jpg) | **Code Garden** <br> ![Code Garden](assets/themes/Code-Garden.jpg) |
+| **Crimson Blade** <br> ![Crimson Blade](assets/themes/Crimson-Blade.jpg) | **Crimson Blue** <br> ![Crimson Blue](assets/themes/Crimson-Blue.jpg) | **DanDaDan** <br> ![DanDaDan](assets/themes/DanDaDan.jpg) |
+| **DoomBringers** <br> ![DoomBringers](assets/themes/DoomBringers.jpg) | **Drawbridge** <br> ![Drawbridge](assets/themes/Drawbridge.jpg) | **FBI** <br> ![FBI](assets/themes/FBI.jpg) |
+| **Graphite Mono** <br> ![Graphite Mono](assets/themes/Graphite-Mono.jpg) | **Greenify** <br> ![Greenify](assets/themes/Greenify.jpg) | **Green Lush** <br> ![Green Lush](assets/themes/Green-Lush.jpg) |
+| **Grukai** <br> ![Grukai](assets/themes/Grukai.jpg) | **Gruvbox Retro** <br> ![Gruvbox Retro](assets/themes/Gruvbox-Retro.jpg) | **LimeFrenzy** <br> ![LimeFrenzy](assets/themes/LimeFrenzy.jpg) |
+| **Lock In** <br> ![Lock In](assets/themes/Lock-In.jpg) | **Monterey Frost** <br> ![Monterey Frost](assets/themes/Monterey-Frost.jpg) | **Nier** <br> ![Nier](assets/themes/Nier.jpg) |
+| **Obsidian Purple** <br> ![Obsidian Purple](assets/themes/Obsidian-Purple.jpg) | **Oregairu** <br> ![Oregairu](assets/themes/Oregairu.jpg) | **Oxo Carbon** <br> ![Oxo Carbon](assets/themes/Oxo-Carbon.jpg) |
+| **Pixel Dream** <br> ![Pixel Dream](assets/themes/Pixel-Dream.jpg) | **Red Stone** <br> ![Red Stone](assets/themes/Red-Stone.jpg) | **Rosé Pine** <br> ![Rosé Pine](assets/themes/Rose-Pine.jpg) |
+| **Scarlet Night** <br> ![Scarlet Night](assets/themes/Scarlet-Night.jpg) | **Soulsborne** <br> ![Soulsborne](assets/themes/Soulsborne.jpg) | **Synth Wave** <br> ![Synth Wave](assets/themes/Synth-Wave.jpg) |
+| **Vanta Black** <br> ![Vanta Black](assets/themes/Vanta-Black.jpg) | | |
 
 ## Install
 
