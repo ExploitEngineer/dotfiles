@@ -1,0 +1,52 @@
+$HOME/.config/kitty/theme.conf|killall -SIGUSR1 kitty
+
+
+
+# Nier Automata – 2B inspired theme
+
+
+foreground              #EAE6DC
+background              #181C19
+selection_foreground    #101010
+selection_background    #BFC59E
+cursor                  #A0B69F
+cursor_text_color       #181C19
+
+# Tabs
+active_tab_foreground     #EAE6DC
+active_tab_background     #3D4743
+inactive_tab_foreground   #A0B69F
+inactive_tab_background   #252925
+
+# ───────────── Colors ─────────────
+# black – darker green tone
+color0   #161A17
+color8   #4A574F
+
+# red – warm metal tint
+color1   #9C6B5A
+color9   #C68A76
+
+# green – highlight tone
+color2   #7CD7E0
+color10  #9EE3E8
+
+# yellow/gold – subtle highlight
+color3   #E6E3D8
+color11  #DCD6A7
+
+# blue – desaturated steel blue
+color4   #97B7B4
+color12  #A0B69F
+
+# magenta – soft muted lilac (for hints)
+color5   #B9A8B6
+color13  #D1C3CE
+
+# cyan – pale leaf tint (for calm glow)
+color6   #B5C9B1
+color14  #CDE0C9
+
+# white – *2B glove & hair tone*
+color7   #E5DECB
+color15  #F1EADC

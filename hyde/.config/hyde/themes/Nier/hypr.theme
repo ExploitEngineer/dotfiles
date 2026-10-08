@@ -1,0 +1,59 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
+
+$GTK_THEME= Nier
+$ICON_THEME = Gruvbox-Plus-Dark
+$CURSOR_THEME = Gruvbox-Retro
+$CURSOR_SIZE = 20
+$COLOR_SCHEME = prefer-dark
+
+#? For anyone using the old implementaiton of hyprdots
+#? You can use the following commands to set the following
+#? This is not needed for the new implementation as this makes it slower
+
+#?exec = gsettings set org.gnome.desktop.interface icon-theme 'Gruvbox-Plus-Dark'
+#?exec = gsettings set org.gnome.desktop.interface gtk-theme 'Nier'
+#?exec = gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+#?exec = gsettings set org.gnome.desktop.interface cursor-theme 'Gruvbox-Retro'
+#?exec = hyprctl setcursor Gruvbox-Retro 20
+#?exec = gsettings set org.gnome.desktop.interface cursor-size 20
+
+
+general {
+    gaps_in = 3
+    gaps_out = 8
+
+    col.active_border = rgba(228, 228, 230, 1) rgba(102, 145, 120, 1) rgba(102, 145, 120, 1) rgba(228, 228, 230, 1) 90deg
+    col.inactive_border = rgba(70, 85, 75, 1) rgba(45, 55, 50, 1) rgba(45, 55, 50, 1) rgba(70, 85, 75, 1) 90deg
+
+    border_size = 2
+    resize_on_border = true
+    layout = dwindle
+}
+
+
+decoration {
+    rounding = 4
+    active_opacity = 0.95
+    inactive_opacity = 0.85
+
+    shadow {
+    enabled = false
+    ignore_window = true
+    render_power = 2
+    color = 0x80ffffff
+    range = 14
+    offset = 0 0
+    }
+
+    blur {
+        enabled = yes
+        size = 3
+        passes = 2
+        new_optimizations = on
+        ignore_opacity = off
+        xray = false
+    }
+}
+
+
+layerrule=unset,waybar
