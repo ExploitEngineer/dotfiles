@@ -1,0 +1,51 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
+
+$GTK_THEME = Kripton
+$ICON_THEME = Tela-circle-blue
+$COLOR_SCHEME = prefer-dark
+$CURSOR_THEME = Sweet-cursors
+$CURSOR_SIZE = 22
+$FONT = Noto_Sans
+
+exec = gsettings set org.gnome.desktop.interface icon-theme '$ICON_THEME'
+exec = gsettings set org.gnome.desktop.interface gtk-theme '$GTK_THEME'
+exec = gsettings set org.gnome.desktop.interface color-scheme '$COLOR_SCHEME'
+exec = Hyde cursor theme '$CURSOR_THEME' size $CURSOR_SIZE
+
+general {
+    gaps_in = 5
+    gaps_out = 10
+    border_size = 2
+    col.active_border = rgba(6cc4ffff) rgba(a3b5ffff) 45deg   # Yukino cool blue gradient
+    col.inactive_border = rgba(ff9ecaff) rgba(feb2d2ff) 45deg # Yui soft pink gradient
+    layout = dwindle
+    resize_on_border = true
+}
+
+group {
+    col.border_active = rgba(6cc4ffff) rgba(a3b5ffff) 45deg
+    col.border_inactive = rgba(ff9ecaff) rgba(feb2d2ff) 45deg
+    col.border_locked_active = rgba(6cc4ffff) rgba(a3b5ffff) 45deg
+    col.border_locked_inactive = rgba(ff9ecaff) rgba(feb2d2ff) 45deg
+}
+
+decoration {
+    rounding = 8
+    drop_shadow = false
+
+    blur {
+        enabled = yes
+        size = 6
+        passes = 3
+        new_optimizations = on
+        ignore_opacity = on
+        xray = false
+    }
+}
+
+blurls = waybar
+
+
+
+
+

@@ -1,0 +1,14 @@
+$HOME/.config/rofi/theme.rasi
+
+* {
+    main-bg:            #1C1F27E6;   /* cool Yukino dark background */
+    main-fg:            #E8EBF7FF;   /* neutral bright text */
+    main-br:            #FF9ECAFF;   /* Yui pink border accent */
+    main-ex:            #A3B5FFFF;   /* Yukino soft blue secondary */
+    select-bg:          #ff8fc1ff;   /* stronger pink highlight, better contrast */
+    select-fg:          #0D0F12FF;   /* deeper blackish text for clarity */
+    separatorcolor:     transparent;
+    border-color:       #FF9ECAFF;   /* crisp pink outline */
+}
+
+

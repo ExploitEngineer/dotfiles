@@ -1,0 +1,12 @@
+$HOME/.config/waybar/theme.css | ${scrDir}/wbarconfgen.sh
+
+/* Oregairu (Yukino × Yui) — Blur enabled */
+@define-color bar-bg rgba(0, 0, 0, 0.15);
+@define-color main-bg rgba(28, 31, 39, 0.8);
+@define-color main-fg #E8EBF7;
+
+@define-color wb-act-bg #6CC4FF;
+@define-color wb-act-fg #101217;
+
+@define-color wb-hvr-bg #FF9ECA;
+@define-color wb-hvr-fg #101217;
