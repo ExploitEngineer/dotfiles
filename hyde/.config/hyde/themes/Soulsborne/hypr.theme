@@ -1,0 +1,48 @@
+$HOME/.config/hypr/themes/theme.conf | > $HOME/.config/hypr/themes/colors.conf
+
+$GTK_THEME = Kripton
+$ICON_THEME = Tela-circle-black
+$CURSOR_THEME = Sweet-cursors
+$CURSOR_SIZE = 22
+$COLOR_SCHEME = prefer-dark
+$FONT = Noto_Sans
+
+exec = gsettings set org.gnome.desktop.interface icon-theme $ICON_THEME
+exec = gsettings set org.gnome.desktop.interface gtk-theme $GTK_THEME
+exec = gsettings set org.gnome.desktop.interface color-scheme $COLOR_SCHEME
+exec = gsettings set org.gnome.desktop.interface cursor-theme $CURSOR_THEME
+exec = gsettings set org.gnome.desktop.interface cursor-size $CURSOR_SIZE
+exec = hyprctl setcursor $CURSOR_THEME $CURSOR_SIZE
+
+general {
+    gaps_in = 3
+    gaps_out = 8
+    border_size = 2
+    col.active_border = rgba(b9c4cfff) rgba(cdd6dfff) 45deg
+    col.inactive_border = rgba(6a727dff) rgba(9098a3ff) 45deg
+    layout = dwindle
+    resize_on_border = true
+}
+
+group {
+    col.border_active = rgba(b9c4cfff) rgba(cdd6dfff) 45deg
+    col.border_inactive = rgba(6a727dff) rgba(9098a3ff) 45deg
+    col.border_locked_active = rgba(b9c4cfff) rgba(cdd6dfff) 45deg
+    col.border_locked_inactive = rgba(6a727dff) rgba(9098a3ff) 45deg
+}
+
+decoration {
+    rounding = 3
+    shadow:enabled = false
+
+    blur {
+        enabled = yes
+        size = 7
+        passes = 3
+        new_optimizations = on
+        ignore_opacity = on
+        xray = false
+    }
+}
+
+layerrule = blur true, match:classwaybar

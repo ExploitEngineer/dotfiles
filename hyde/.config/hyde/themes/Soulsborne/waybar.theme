@@ -1,0 +1,11 @@
+$HOME/.config/waybar/theme.css | ${scrDir}/wbarconfgen.sh
+
+@define-color bar-bg rgba(20, 22, 26, 0.35);
+@define-color main-bg #141618;
+@define-color main-fg #f5f7fa;
+
+@define-color wb-act-bg #b9c4cf;   /* Active: light steel grey */
+@define-color wb-act-fg #141618;
+
+@define-color wb-hvr-bg #cdd6df;   /* Hover: polished silver */
+@define-color wb-hvr-fg #141618;

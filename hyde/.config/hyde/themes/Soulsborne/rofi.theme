@@ -1,0 +1,12 @@
+$HOME/.config/rofi/theme.rasi
+
+* {
+    main-bg:            #141618E6;   /* translucent dark steel background */
+    main-fg:            #f5f7faff;   /* bright silver text */
+    main-br:            #b9c4cfff;   /* border / active element steel tone */
+    main-ex:            #cdd6dfff;   /* hover / highlight polished silver */
+    select-bg:          #cdd6dfff;   /* selection background (same as hover) */
+    select-fg:          #141618ff;   /* dark text for contrast */
+    separatorcolor:     transparent;
+    border-color:       transparent;
+}
