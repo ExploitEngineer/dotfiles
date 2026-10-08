@@ -1,0 +1,78 @@
+$HOME/.config/kitty/theme.conf|killall -SIGUSR1 kitty
+
+## name:     Agency 🛰
+## blurb:    NSA aesthetic — dark navy, surveillance blue.
+
+# The basic colors
+foreground              #d2dff2
+background              #04080f
+selection_foreground    #051022
+selection_background    #3b82f6
+
+# Cursor colors
+cursor                  #3b82f6
+cursor_text_color       #04080f
+
+# URL underline color when hovering with mouse
+url_color               #69adf4
+
+# Kitty window border colors
+active_border_color     #3b82f6
+inactive_border_color   #16263f
+bell_border_color       #c84b4b
+
+# OS Window titlebar colors
+wayland_titlebar_color system
+macos_titlebar_color system
+
+# Window layout
+window_padding_width    25
+
+# Tab bar colors
+active_tab_foreground   #051022
+active_tab_background   #3b82f6
+inactive_tab_foreground #5c7396
+inactive_tab_background #0c1626
+tab_bar_background      #04080f
+
+# Colors for marks (marked text in the terminal)
+mark1_foreground #04080f
+mark1_background #3b82f6
+mark2_foreground #04080f
+mark2_background #c9a227
+mark3_foreground #04080f
+mark3_background #4fae7d
+
+# The 16 terminal colors
+
+# black
+color0 #16263f
+color8 #38496b
+
+# red
+color1 #c84b4b
+color9 #e06c6c
+
+# green
+color2  #4fae7d
+color10 #6bc795
+
+# yellow
+color3  #c9a227
+color11 #ddb94f
+
+# blue
+color4  #3b82f6
+color12 #69adf4
+
+# magenta
+color5  #7d9ce6
+color13 #9cb8f0
+
+# cyan
+color6  #4fa8c4
+color14 #7cc4dc
+
+# white
+color7  #c4d2e8
+color15 #eaf1fb

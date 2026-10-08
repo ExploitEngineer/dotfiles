@@ -1,0 +1,152 @@
+${XDG_CONFIG_HOME}/hypr/hyprlock/theme.conf
+# Agency — TOP SECRET lock layout
+# Visual only: same hyprlock behavior and authentication.
+
+$fontFamily = JetBrainsMono Nerd Font
+$fn_date=date +"%A, %d %B %Y"
+
+# GENERAL
+general {
+    no_fade_in = false
+    grace = 0
+    disable_loading_bar = false
+}
+
+# BACKGROUND
+background {
+    monitor =
+    path = $BACKGROUND_PATH
+    blur_passes = 2
+    dim_strength = 0.35
+}
+
+# RED VERTICAL BAR (top-left)
+label {
+    monitor =
+    text = ▍
+    color = rgba(200, 75, 75, 1.0)
+    font_size = 34
+    font_family = $fontFamily
+    position = 48, -52
+    halign = left
+    valign = top
+}
+
+# TOP SECRET // RESTRICTED ACCESS
+label {
+    monitor =
+    text = TOP SECRET // RESTRICTED ACCESS
+    color = rgba(59, 130, 246, 1.0)
+    font_size = 22
+    font_family = $fontFamily Bold
+    position = 78, -60
+    halign = left
+    valign = top
+}
+
+# GIANT CLOCK
+label {
+    monitor =
+    text = $TIME
+    color = rgba(59, 130, 246, 1.0)
+    font_size = 140
+    font_family = $fontFamily ExtraBold
+    shadow_passes = 3
+    shadow_size = 6
+    shadow_color = rgba(59, 130, 246, 0.45)
+    position = 80, -160
+    halign = left
+    valign = top
+}
+
+# FULL DATE
+label {
+    monitor =
+    text = cmd[update:60000] $fn_date
+    color = rgba(92, 115, 150, 1.0)
+    font_size = 22
+    font_family = $fontFamily
+    position = 84, -370
+    halign = left
+    valign = top
+}
+
+# AGENCY SEAL ON THE RIGHT WITH GLOW
+image {
+    monitor =
+    path = $HOME/.config/hyde/themes/Agency/logo/agencySeal.png
+    size = 420
+    rounding = -1
+    border_size = 2
+    border_color = rgba(59, 130, 246, 0.55)
+    reload_time = 0
+    position = -140, 0
+    halign = right
+    valign = center
+}
+
+# USER
+label {
+    monitor =
+    text =   $USER
+    color = rgba(210, 223, 242, 1.0)
+    font_size = 16
+    font_family = $fontFamily Bold
+    position = 84, 218
+    halign = left
+    valign = bottom
+}
+
+# PASSWORD FIELD
+input-field {
+    monitor =
+    size = 360, 56
+    outline_thickness = 1
+    dots_size = 0.25
+    dots_spacing = 0.3
+    outer_color = rgba(22, 38, 63, 1.0)
+    inner_color = rgba(12, 22, 38, 0.9)
+    font_color = rgba(210, 223, 242, 1.0)
+    check_color = rgba(201, 162, 39, 1.0)
+    fail_color = rgba(200, 75, 75, 1.0)
+    placeholder_text = <span foreground="##5c7396">ACCESS CODE</span>
+    fail_text = <span foreground="##c84b4b">ACCESS DENIED ($ATTEMPTS)</span>
+    capslock_color = rgba(201, 162, 39, 1.0)
+    font_family = $fontFamily
+    position = 84, 140
+    halign = left
+    valign = bottom
+}
+
+# AUTHENTICATE BUTTON (decorative, Enter submits)
+shape {
+    monitor =
+    size = 360, 48
+    color = rgba(59, 130, 246, 1.0)
+    rounding = 8
+    position = 84, 72
+    halign = left
+    valign = bottom
+}
+label {
+    monitor =
+    text = A U T H E N T I C A T E
+    color = rgba(5, 16, 34, 1.0)
+    font_size = 14
+    font_family = $fontFamily Bold
+    position = 156, 86
+    halign = left
+    valign = bottom
+}
+
+# FOOTER
+label {
+    monitor =
+    text = Session: Hyprland (uwsm-managed)
+    color = rgba(56, 73, 107, 1.0)
+    font_size = 13
+    font_family = $fontFamily
+    position = 0, 36
+    halign = center
+    valign = bottom
+}
