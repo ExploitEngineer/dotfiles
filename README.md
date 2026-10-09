@@ -33,7 +33,7 @@ dotfiles/
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
 ├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
 ├── git/        .gitconfig          git identity and global ignore
-├── xdg/        mimeapps.list       default handlers, environment.d, applications/
+├── xdg/        mimeapps.list       default handlers, environment.d
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
 └── patches/                        fixes for HyDE-owned program files
@@ -304,31 +304,31 @@ Reapply it after every HyDE update along with the others.
 ## Graphics
 
 NVIDIA Quadro P1000 Mobile (GP107GLM), 4 GB, driver 580, `nvidia-580xx-dkms` from chaotic-aur.
+Single GPU: there is no Intel iGPU visible to the OS on this machine, so nothing here is about hybrid graphics or PRIME offload.
 
 This section is the whole story, so it does not have to be rediscovered or re-explained.
 
-### Hybrid graphics (since 2026-10-09)
+### Hybrid graphics was tried and reverted (2026-10-09)
 
-The BIOS graphics mode was switched from discrete-only to Hybrid.
-The machine now has a second GPU, Intel UHD Graphics P630 (Coffee Lake-S GT2), `i915` driver, and `eDP-1` (the laptop panel) is wired to it, not to the NVIDIA card.
-Everything below this point was written for the single-GPU era and is kept as an accurate record of that diagnosis, but its framing of the NVIDIA card as the one true GPU no longer holds: Intel is now the primary/scanout GPU, and NVIDIA is offload-only.
+The BIOS graphics mode was switched from discrete-only to Hybrid for a few hours on 2026-10-09, to see whether moving the Intel UHD P630 iGPU onto scanout duty (keeping NVIDIA offload-only) would reduce exposure to the BAR1-exhaustion Xid faults documented below.
+Reverted the same day after two live Hyprland crashes.
 
-`hypr/.config/hypr/scripts/nvidia-offload.sh` runs a command on the NVIDIA GPU via PRIME render offload (`__NV_PRIME_RENDER_OFFLOAD`, not a hardcoded `/dev/dri/cardN`, so it is unaffected by which card index either GPU ends up at).
-Confirmed working for GLX/EGL apps: a `kitty` launched through it shows up under `nvidia-smi`'s process list using the Quadro, while a plain `kitty` does not.
+What worked: PRIME render offload to NVIDIA for GLX/EGL apps, confirmed via `nvidia-smi`.
+What didn't: Chromium/Brave under Wayland ignores PRIME offload env vars entirely and needs an explicit `--render-node-override` instead; Intel had no Vulkan driver installed out of the box, breaking WebGPU on some sites until `vulkan-intel` and `intel-media-driver` were installed.
 
-**Chromium/Brave under Wayland ignores PRIME offload env vars entirely.**
-Ozone picks its GPU through its own `--render-node-override` flag, defaulting to whichever GPU drives the display (Intel), regardless of `__NV_PRIME_RENDER_OFFLOAD`.
-`nvidia-offload.sh brave-beta` still launches Brave on Intel - confirmed by checking the GPU process's open `/dev/dri` fds.
-The only thing that moves it is passing `--render-node-override` explicitly, which `hypr/.config/hypr/scripts/brave-nvidia.sh` does (render node resolved at launch via `lspci`, not hardcoded, same reasoning as `nvidia-offload.sh`).
-A matching `xdg/.local/share/applications/brave-browser-beta-nvidia.desktop` entry puts it in the app launcher as "Brave (NVIDIA)".
-Confirmed via `nvidia-smi` showing the GPU process attached to the Quadro.
+What ended it: a `coredumpctl` trace caught Hyprland itself aborting mid-frame, not an NVIDIA Xid fault.
 
-Why this exists: Intel UHD P630 is a 2018 Coffee Lake iGPU with no Vulkan driver installed by default (`vulkan-intel` and `intel-media-driver` had to be installed manually, see below) and limited WebGPU feature support even once it is - some WebGPU-heavy sites (`THREE.WebGPUBackend: Unable to create WebGPU adapter`) only work through the NVIDIA launcher.
-Use it for those, not as the default browser, since normal browsing on Intel is what keeps NVIDIA's BAR1 out of the picture.
+```
+CMonitorFrameScheduler::onFrame -> renderMonitor -> CHyprGLRenderer::endRender
+-> CEGLSync::create -> Mesa EGL -> libgallium (Intel's driver) -> abort
+```
 
-**VA-API on Intel:** `vulkan-intel` and `intel-media-driver` are now installed (`sudo pacman -S vulkan-intel intel-media-driver`), resolving the open question above about re-enabling hardware video decode without the Pascal BAR1 risk.
-Confirmed Intel's Vulkan driver initializes and enumerates correctly (`libplacebo` probe lists both GPUs with full device properties).
-Not yet confirmed: whether the browser's VA-API decode path actually picks up `intel-media-driver` at runtime - installed, not yet verified end to end.
+Crashed inside Mesa's Intel Gallium driver during EGL sync-fence creation on a DRM page flip, and the crashed process was already running with `--watchdog-fd --safe-mode`, meaning it was not the first occurrence that session.
+`awww-daemon` and waybar both aborted in the same instant, consistent with losing the compositor out from under them.
+Root cause not isolated beyond that trace (plain Mesa/iGPU bug vs. a cross-GPU buffer-sync issue between Intel scanout and NVIDIA offload are both plausible), and was not worth chasing further given the discrete-only baseline is a known, already-diagnosed quantity.
+
+Net effect: trading the known Xid 79 / BAR1 risk for an unknown Mesa/Intel compositor-crash risk was not a clear improvement, so back to discrete-only.
+If this is tried again, start from `git log --diff-filter=D -- 'hypr/.config/hypr/scripts/nvidia-offload.sh' 'hypr/.config/hypr/scripts/brave-nvidia.sh' 'xdg/.local/share/applications/brave-browser-beta-nvidia.desktop'` for the PRIME offload wrapper and the NVIDIA-pinned Brave launcher, both working, just removed as dead weight once there was only one GPU again.
 
 ### The GPU was never the problem
 
