@@ -98,6 +98,17 @@ hl.config({
 			natural_scroll = false,
 		},
 	},
+
+	dwindle = {
+		-- HyDE's default layout pins this to 2 (always split new windows into
+		-- the bottom/right half of the focused window, never top/left). That
+		-- is a fixed rule, not cursor-based placement -- dwindle never looks
+		-- at the mouse position to decide where a new window lands, only
+		-- which window is focused. 0 restores Hyprland's own default: split
+		-- direction follows the focused window's aspect ratio instead of
+		-- always going bottom/right. Changed 2026-10-09.
+		force_split = 0,
+	},
 })
 
 -- The old config also had `blurls = waybar`. That is no longer needed: HyDE
