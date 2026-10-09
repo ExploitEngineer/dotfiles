@@ -87,8 +87,10 @@ Pure hashing was tried first and sent Bad Blood to the bottom-sheet layout, so t
 | **1-Bit** <br> ![1-Bit login](assets/sddm-preview/1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood login](assets/sddm-preview/Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine login](assets/sddm-preview/Rose-Pine.jpg) |
 | **Synth Wave** <br> ![Synth Wave login](assets/sddm-preview/Synth-Wave.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha login](assets/sddm-preview/Catppuccin-Mocha.jpg) | |
 
-These images are HTML/CSS mockups of the layouts, not screenshots of the QML greeter.
-Source: `assets/sddm-preview/preview.html`, open directly in a browser.
+These images are renders of the HTML/CSS mockups of the layouts, not screenshots of the QML greeter.
+They are the page alone, with no browser around it: `assets/sddm-preview/preview.html?clean#<scene>` hides the page's own scene switcher and label.
+Open it directly in a browser, or regenerate an image with Playwright's `chrome-headless-shell --screenshot=out.png --window-size=1920,1080 --hide-scrollbars --virtual-time-budget=5000 "file://$PWD/assets/sddm-preview/preview.html?clean#bad-blood"`.
+Scene names: `1-bit`, `bad-blood`, `rose-pine`, `synth-wave`, `catppuccin-mocha`.
 
 **How it stays in sync.**
 `wallbash/always/sddm-wallbash.dcol` runs on every wallpaper change and calls `sddm-wallbash.sh`, which writes `/etc/sddm-wallbash/current.conf` (colors, a copy of the wallpaper, the layout number).
@@ -124,6 +126,13 @@ The password field had `focus=true` but `activeFocus=false`, because the focus c
 And 1-Bit drew a blinking block beside the "PASS" label that was not connected to the field at all.
 Both are fixed: the field now takes focus when a layout appears and draws its own caret, and all five layouts measure `activeFocus=true`.
 Not yet checked: an actual boot into this greeter on this machine, and the power buttons, which are hidden in `--test-mode` because SDDM reports no power capabilities there.
+
+**Known gaps between the mockups and the real greeter.**
+Only the 1-Bit layout has been looked at in a real `--test-mode` window.
+Rendering all five QML layouts offscreen with each theme's own wallpaper and wallbash colors showed two that are clearly worse than their mockups:
+the Catppuccin bottom sheet comes out pink with low-contrast blue text and inverted button colors, and Bad Blood's red glow becomes flat gray discs that wash out the wallpaper.
+Rosé Pine's clock uses the system serif, and no layout can use blur or shader effects.
+These are bugs in the QML translation, not the design, and are not fixed yet.
 
 **Fonts.**
 The QML asks only for generic `serif` and `monospace`, because the greeter runs as `sddm` and sees system fonts only.

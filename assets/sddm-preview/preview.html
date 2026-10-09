@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SDDM wallbash preview</title>
+<script>if (/[?&]clean\b/.test(location.search)) document.documentElement.classList.add('clean');</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
@@ -54,6 +55,10 @@
     right: 0;
   }
   button { font-family: inherit; cursor: pointer; }
+
+  /* clean-mode: ?clean hides the page's own chrome (scene switcher, "mockup only" label)
+     and the 1-Bit scene's decorative cursor, so a screenshot contains only the login screen. */
+  .clean .tabs, .clean .label, .clean .cursor-blink { display: none !important; }
 
   /* ============ shared chrome (tab switcher) ============ */
   .tabs {
