@@ -304,9 +304,21 @@ Reapply it after every HyDE update along with the others.
 ## Graphics
 
 NVIDIA Quadro P1000 Mobile (GP107GLM), 4 GB, driver 580, `nvidia-580xx-dkms` from chaotic-aur.
-Single GPU: there is no Intel iGPU visible to the OS on this machine, so nothing here is about hybrid graphics or PRIME offload.
 
 This section is the whole story, so it does not have to be rediscovered or re-explained.
+
+### Hybrid graphics (since 2026-10-09)
+
+The BIOS graphics mode was switched from discrete-only to Hybrid.
+The machine now has a second GPU, Intel UHD Graphics P630 (Coffee Lake-S GT2), `i915` driver, and `eDP-1` (the laptop panel) is wired to it, not to the NVIDIA card.
+Everything below this point was written for the single-GPU era and is kept as an accurate record of that diagnosis, but its framing of the NVIDIA card as the one true GPU no longer holds: Intel is now the primary/scanout GPU, and NVIDIA is offload-only.
+
+`hypr/.config/hypr/scripts/nvidia-offload.sh` runs a command on the NVIDIA GPU via PRIME render offload (`__NV_PRIME_RENDER_OFFLOAD`, not a hardcoded `/dev/dri/cardN`, so it is unaffected by which card index either GPU ends up at).
+Confirmed working: a `kitty` launched through it shows up under `nvidia-smi`'s process list using the Quadro, while a plain `kitty` does not.
+
+Open question, not yet investigated: the BAR1 exhaustion risk described below is specific to the NVIDIA card being the one doing scanout and video decode.
+With Intel now primary, browser VA-API decode may be safe to re-enable on the Intel node instead, sidestepping the Pascal BAR1 limit entirely.
+Not changed yet because it needs verifying which GPU the browser actually opens for decode now, not assumed.
 
 ### The GPU was never the problem
 
