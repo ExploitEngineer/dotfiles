@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Brave (NVIDIA)
+GenericName=Web Browser, forced onto the NVIDIA GPU
+Comment=Brave pinned to the Quadro P1000, for WebGPU-heavy sites the Intel iGPU can't handle
+Exec=/home/mr_robot/.config/hypr/scripts/brave-nvidia.sh %U
+StartupNotify=true
+StartupWMClass=brave-browser-beta
+Terminal=false
+Icon=brave-browser-beta
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;x-scheme-handler/http;x-scheme-handler/https;

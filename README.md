@@ -33,7 +33,7 @@ dotfiles/
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
 ├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
 ├── git/        .gitconfig          git identity and global ignore
-├── xdg/        mimeapps.list       default handlers, environment.d
+├── xdg/        mimeapps.list       default handlers, environment.d, applications/
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
 └── patches/                        fixes for HyDE-owned program files
@@ -314,11 +314,21 @@ The machine now has a second GPU, Intel UHD Graphics P630 (Coffee Lake-S GT2), `
 Everything below this point was written for the single-GPU era and is kept as an accurate record of that diagnosis, but its framing of the NVIDIA card as the one true GPU no longer holds: Intel is now the primary/scanout GPU, and NVIDIA is offload-only.
 
 `hypr/.config/hypr/scripts/nvidia-offload.sh` runs a command on the NVIDIA GPU via PRIME render offload (`__NV_PRIME_RENDER_OFFLOAD`, not a hardcoded `/dev/dri/cardN`, so it is unaffected by which card index either GPU ends up at).
-Confirmed working: a `kitty` launched through it shows up under `nvidia-smi`'s process list using the Quadro, while a plain `kitty` does not.
+Confirmed working for GLX/EGL apps: a `kitty` launched through it shows up under `nvidia-smi`'s process list using the Quadro, while a plain `kitty` does not.
 
-Open question, not yet investigated: the BAR1 exhaustion risk described below is specific to the NVIDIA card being the one doing scanout and video decode.
-With Intel now primary, browser VA-API decode may be safe to re-enable on the Intel node instead, sidestepping the Pascal BAR1 limit entirely.
-Not changed yet because it needs verifying which GPU the browser actually opens for decode now, not assumed.
+**Chromium/Brave under Wayland ignores PRIME offload env vars entirely.**
+Ozone picks its GPU through its own `--render-node-override` flag, defaulting to whichever GPU drives the display (Intel), regardless of `__NV_PRIME_RENDER_OFFLOAD`.
+`nvidia-offload.sh brave-beta` still launches Brave on Intel - confirmed by checking the GPU process's open `/dev/dri` fds.
+The only thing that moves it is passing `--render-node-override` explicitly, which `hypr/.config/hypr/scripts/brave-nvidia.sh` does (render node resolved at launch via `lspci`, not hardcoded, same reasoning as `nvidia-offload.sh`).
+A matching `xdg/.local/share/applications/brave-browser-beta-nvidia.desktop` entry puts it in the app launcher as "Brave (NVIDIA)".
+Confirmed via `nvidia-smi` showing the GPU process attached to the Quadro.
+
+Why this exists: Intel UHD P630 is a 2018 Coffee Lake iGPU with no Vulkan driver installed by default (`vulkan-intel` and `intel-media-driver` had to be installed manually, see below) and limited WebGPU feature support even once it is - some WebGPU-heavy sites (`THREE.WebGPUBackend: Unable to create WebGPU adapter`) only work through the NVIDIA launcher.
+Use it for those, not as the default browser, since normal browsing on Intel is what keeps NVIDIA's BAR1 out of the picture.
+
+**VA-API on Intel:** `vulkan-intel` and `intel-media-driver` are now installed (`sudo pacman -S vulkan-intel intel-media-driver`), resolving the open question above about re-enabling hardware video decode without the Pascal BAR1 risk.
+Confirmed Intel's Vulkan driver initializes and enumerates correctly (`libplacebo` probe lists both GPUs with full device properties).
+Not yet confirmed: whether the browser's VA-API decode path actually picks up `intel-media-driver` at runtime - installed, not yet verified end to end.
 
 ### The GPU was never the problem
 
