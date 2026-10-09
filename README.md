@@ -119,7 +119,11 @@ sudo cp /etc/sddm.conf.d/backup_the_hyde_project.conf /etc/sddm.conf.d/the_hyde_
 **What was and was not checked.**
 All five layouts load in the real `sddm-greeter-qt6` without QML errors, checked through the journal (the greeter does not log to stderr).
 A deliberately broken `Main.qml` was the negative control: it logs the parse error and the greeter falls back to SDDM's built-in theme instead of crashing, so a theme that fails to load should still leave a working login.
-Not yet checked: an actual boot into this greeter on this machine.
+A first `--test-mode` run turned up two real bugs the earlier checks missed.
+The password field had `focus=true` but `activeFocus=false`, because the focus chain broke above it (the Loader and the layout root), so typing went nowhere until you clicked the box.
+And 1-Bit drew a blinking block beside the "PASS" label that was not connected to the field at all.
+Both are fixed: the field now takes focus when a layout appears and draws its own caret, and all five layouts measure `activeFocus=true`.
+Not yet checked: an actual boot into this greeter on this machine, and the power buttons, which are hidden in `--test-mode` because SDDM reports no power capabilities there.
 
 **Fonts.**
 The QML asks only for generic `serif` and `monospace`, because the greeter runs as `sddm` and sees system fonts only.

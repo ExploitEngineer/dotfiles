@@ -116,5 +116,6 @@ Rectangle {
     Loader {
         id: stage
         anchors.fill: parent
+        focus: true
     }
 }

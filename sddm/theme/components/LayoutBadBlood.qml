@@ -21,6 +21,11 @@ Item {
     property color colA3: "#7f1a15"
     property bool reducedMotion: false
 
+    // Without this the password field had focus=true but activeFocus=false: its focus
+    // chain was broken above it (Loader -> scene), so on a real greeter the first
+    // keystrokes went nowhere and the box showed no active state. Measured, not guessed.
+    Component.onCompleted: Qt.callLater(function() { passwordField.forceActiveFocus(); })
+
     component AngularPanel: Shape {
         id: panel
         property color fillColor: "transparent"

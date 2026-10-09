@@ -21,6 +21,11 @@ Item {
     property color colA3: "#636363"
     property bool reducedMotion: false
 
+    // Without this the password field had focus=true but activeFocus=false: its focus
+    // chain was broken above it (Loader -> scene), so on a real greeter the first
+    // keystrokes went nowhere and the box showed no active state. Measured, not guessed.
+    Component.onCompleted: Qt.callLater(function() { passwordField.forceActiveFocus(); })
+
     property real wpWidth: width * 0.42
 
     Rectangle {
@@ -173,35 +178,13 @@ Item {
         }
         Item { width: 1; height: 20 }
 
-        Row {
-            spacing: 2
-            Text {
-                text: "PASS"
-                color: scene.colA2
-                font.family: "monospace"
-                font.pixelSize: 11
-                font.letterSpacing: 1
-            }
-            Rectangle {
-                id: cursorBlink
-                width: 11; height: 24
-                color: scene.colText
-                anchors.verticalCenter: parent.verticalCenter
-
-                // target: cursorBlink by id, not "parent" - inside a nested
-                // SequentialAnimation/PropertyAction, "parent" does not resolve to this
-                // Rectangle (Animation types aren't Items and don't have their own
-                // "parent" Item-property), so it was found by walking back up the
-                // document's enclosing Items instead - the whole screen was blinking.
-                SequentialAnimation {
-                    running: !scene.reducedMotion
-                    loops: Animation.Infinite
-                    PauseAnimation { duration: 550 }
-                    PropertyAction { target: cursorBlink; property: "opacity"; value: 0 }
-                    PauseAnimation { duration: 550 }
-                    PropertyAction { target: cursorBlink; property: "opacity"; value: 1 }
-                }
-            }
+        Text {
+            // Brightens when the field below has focus, so it is obvious where typing goes.
+            text: "PASS"
+            color: passwordField.activeFocus ? scene.colText : scene.colA2
+            font.family: "monospace"
+            font.pixelSize: 11
+            font.letterSpacing: 1
         }
         Item { width: 1; height: 6 }
 
@@ -218,6 +201,15 @@ Item {
                 color: "transparent"
                 border.color: passwordField.activeFocus ? scene.colText : scene.colA1
                 border.width: 1
+            }
+            // The terminal-style block cursor is the field's own caret, so it sits where
+            // typing happens. It used to be a free-floating rectangle beside the "PASS"
+            // label that was not connected to the field at all and read as the input point.
+            // TextInput shows/hides and blinks this itself, only while the field has focus.
+            cursorDelegate: Rectangle {
+                width: 10
+                height: passwordField.font.pixelSize + 6
+                color: scene.colText
             }
             focus: true
             Keys.onReturnPressed: loginButton.clicked()
@@ -280,33 +272,23 @@ Item {
             color: scene.colA1
         }
 
-        Text {
+        SessionBadge {
+            id: sessionBadge
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: "hyprland / wayland"
-            color: scene.colA2
-            font.family: "monospace"
-            font.pixelSize: 11
+            textColor: scene.colA2
+            popupBg: scene.colBg
+            popupTextColor: scene.colText
+            fontFamily: "monospace"
+            fontSize: 11
         }
 
-        Row {
+        PowerRow {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 16
-
-            SessionBadge {
-                id: sessionBadge
-                textColor: scene.colA2
-                popupBg: scene.colBg
-                popupTextColor: scene.colText
-                fontFamily: "monospace"
-                fontSize: 11
-            }
-            PowerRow {
-                iconColor: scene.colA2
-                glyphSize: 13
-                itemSpacing: 14
-            }
+            iconColor: scene.colA2
+            glyphSize: 13
+            itemSpacing: 14
         }
     }
 }

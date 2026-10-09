@@ -23,6 +23,11 @@ Item {
     property color colA3: "#1a1415"
     property bool reducedMotion: false
 
+    // Without this the password field had focus=true but activeFocus=false: its focus
+    // chain was broken above it (Loader -> scene), so on a real greeter the first
+    // keystrokes went nowhere and the box showed no active state. Measured, not guessed.
+    Component.onCompleted: Qt.callLater(function() { passwordField.forceActiveFocus(); })
+
     Rectangle { anchors.fill: parent; color: scene.colBg }
 
     Image {
