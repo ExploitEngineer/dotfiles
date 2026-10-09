@@ -71,6 +71,20 @@ The themed `wlogout` power menu, for a few of the themes above:
 |---|---|---|
 | **1-Bit** <br> ![1-Bit wlogout](assets/extras/wlogout-1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood wlogout](assets/extras/wlogout-Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine wlogout](assets/extras/wlogout-Rose-Pine.jpg) |
 
+### Login screen (in progress)
+
+Stock SDDM does not follow the active HyDE theme at all; it stays on whatever theme was picked at install time.
+The design below is a preview of what a wallbash-synced login screen would look like: five structurally distinct layouts (not just one template recolored), deterministically assigned across all 37 themes the same way the gallery above is, each one real wallbash hex colors against its theme's actual wallpaper.
+
+These five are HTML/CSS mockups, not the real greeter yet.
+SDDM's greeter runs on QML (Qt Quick), not HTML; a real implementation needs a custom QML theme plus a privileged sync step, since the greeter renders before any user session exists.
+Source for the mockups: `assets/sddm-preview/preview.html`, open directly in a browser.
+
+| | | |
+|---|---|---|
+| **1-Bit** <br> ![1-Bit login](assets/sddm-preview/1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood login](assets/sddm-preview/Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine login](assets/sddm-preview/Rose-Pine.jpg) |
+| **Synth Wave** <br> ![Synth Wave login](assets/sddm-preview/Synth-Wave.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha login](assets/sddm-preview/Catppuccin-Mocha.jpg) | |
+
 ## Install
 
 Install HyDE first.
