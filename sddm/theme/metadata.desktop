@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=HyDE Wallbash
+Description=SDDM greeter that recolors itself from HyDE's wallbash palette. Synced automatically by wallbash/scripts/sddm-wallbash.sh - do not hand-edit theme.conf, it is a build-time fallback only.
+Author=mr_robot
+License=MIT
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Theme-Id=hyde-wallbash
+Theme-API=2.0
+QtVersion=6

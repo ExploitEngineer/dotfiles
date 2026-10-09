@@ -1,0 +1,13 @@
+[Unit]
+Description=Ensure the hyde-wallbash SDDM state file is valid before the greeter starts
+DefaultDependencies=no
+After=local-fs.target
+Before=sddm.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/lib/sddm-wallbash/boot-apply.sh
+
+[Install]
+WantedBy=sddm.service

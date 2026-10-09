@@ -36,6 +36,7 @@ dotfiles/
 ├── xdg/        mimeapps.list       default handlers, environment.d
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
+├── sddm/                           login screen theme + installer (system files, not stowed)
 └── patches/                        fixes for HyDE-owned program files
 ```
 
@@ -71,19 +72,59 @@ The themed `wlogout` power menu, for a few of the themes above:
 |---|---|---|
 | **1-Bit** <br> ![1-Bit wlogout](assets/extras/wlogout-1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood wlogout](assets/extras/wlogout-Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine wlogout](assets/extras/wlogout-Rose-Pine.jpg) |
 
-### Login screen (in progress)
+### Login screen
 
-Stock SDDM does not follow the active HyDE theme at all; it stays on whatever theme was picked at install time.
-The design below is a preview of what a wallbash-synced login screen would look like: five structurally distinct layouts (not just one template recolored), deterministically assigned across all 37 themes the same way the gallery above is, each one real wallbash hex colors against its theme's actual wallpaper.
+Stock SDDM does not follow the active HyDE theme; it stays on whatever theme was picked at install time.
+`sddm/` is a custom QML SDDM theme, `hyde-wallbash`, that re-themes itself on every wallpaper change.
+It has five structurally different layouts rather than one template recolored, each fed that theme's real wallbash colors and its own wallpaper.
 
-These five are HTML/CSS mockups, not the real greeter yet.
-SDDM's greeter runs on QML (Qt Quick), not HTML; a real implementation needs a custom QML theme plus a privileged sync step, since the greeter renders before any user session exists.
-Source for the mockups: `assets/sddm-preview/preview.html`, open directly in a browser.
+The five themes below keep the layout they were designed around.
+The other 32 are hashed onto one of the five by theme name, so a given theme always gets the same layout (`sddm/wallbash/scripts/pick_layout.py`).
+Pure hashing was tried first and sent Bad Blood to the bottom-sheet layout, so the previews would not have matched the real login screen; hence the pins.
 
 | | | |
 |---|---|---|
 | **1-Bit** <br> ![1-Bit login](assets/sddm-preview/1-Bit.jpg) | **Bad Blood** <br> ![Bad Blood login](assets/sddm-preview/Bad-Blood.jpg) | **Rosé Pine** <br> ![Rosé Pine login](assets/sddm-preview/Rose-Pine.jpg) |
 | **Synth Wave** <br> ![Synth Wave login](assets/sddm-preview/Synth-Wave.jpg) | **Catppuccin Mocha** <br> ![Catppuccin Mocha login](assets/sddm-preview/Catppuccin-Mocha.jpg) | |
+
+These images are HTML/CSS mockups of the layouts, not screenshots of the QML greeter.
+Source: `assets/sddm-preview/preview.html`, open directly in a browser.
+
+**How it stays in sync.**
+`wallbash/always/sddm-wallbash.dcol` runs on every wallpaper change and calls `sddm-wallbash.sh`, which writes `/etc/sddm-wallbash/current.conf` (colors, a copy of the wallpaper, the layout number).
+The greeter renders before any user session exists and runs as the `sddm` user, which cannot read `$HOME` (mode 700), so the live state lives in `/etc/sddm-wallbash/`.
+That directory is group-writable by a dedicated `sddm-wallbash` group instead of sitting behind a NOPASSWD sudoers rule, so no root helper runs on each wallpaper change.
+`sddm-wallbash-boot.service` runs as root before SDDM, but only checks the state file is non-empty and restores defaults if not.
+It never reads anything the group can write.
+
+**Install.**
+`install.sh` must be run by hand with sudo; it points SDDM at the new theme as its last step.
+Look at it first, before installing anything:
+
+```sh
+cd sddm
+sddm-greeter-qt6 --test-mode --theme "$PWD/theme"    # a window, layout 1, nothing installed
+sudo ./install.sh                                    # theme, group, state dir, boot unit, Current=hyde-wallbash
+```
+
+Log out and back in once afterwards so the new group membership applies.
+Until then the sync hook logs a warning and skips itself; the greeter falls back to the colors baked into `theme.conf`.
+
+Roll back by restoring the config the installer backed up first:
+
+```sh
+sudo cp /etc/sddm.conf.d/backup_the_hyde_project.conf /etc/sddm.conf.d/the_hyde_project.conf
+```
+
+**What was and was not checked.**
+All five layouts load in the real `sddm-greeter-qt6` without QML errors, checked through the journal (the greeter does not log to stderr).
+A deliberately broken `Main.qml` was the negative control: it logs the parse error and the greeter falls back to SDDM's built-in theme instead of crashing, so a theme that fails to load should still leave a working login.
+Not yet checked: an actual boot into this greeter on this machine.
+
+**Fonts.**
+The QML asks only for generic `serif` and `monospace`, because the greeter runs as `sddm` and sees system fonts only.
+Rosé Pine's italic clock is therefore the system serif, not the Playfair Display used in the mockup.
+No GraphicalEffects or shaders anywhere, given this machine's GPU history; blur and glow are plain overlays and gradients.
 
 ## Install
 

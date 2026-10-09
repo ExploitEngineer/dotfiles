@@ -1,0 +1,4 @@
+/dev/null|${WALLBASH_SCRIPTS}/sddm-wallbash.sh
+# sddm greeter color/wallpaper/template sync - colors passed via dcol_* environment
+# variables, same pattern as wayle.dcol. Target is /dev/null because the script writes
+# its own output file (/etc/sddm-wallbash/current.conf); there is no body template here.
