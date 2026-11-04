@@ -31,7 +31,7 @@ dotfiles/
 ├── desktop/    .config/waybar      bar layout, browser flags
 ├── terminal/   .config/tmux        tmux
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
-├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
+├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default handlers, environment.d
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
@@ -45,7 +45,7 @@ kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wall
 
 ## Themes
 
-HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava and neovim (via `cli/.config/nvim/lua/wallbash_theme.lua`) all repainted together.
+HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava and neovim (via the `wallbash` theme in [chadvim](https://github.com/ExploitEngineer/chadvim)) all repainted together.
 All 37 tracked themes are below, each shown live: neovim, Dolphin's home folder, fastfetch and cava.
 The window arrangement itself varies per theme too, between a few hand-picked three and four pane layouts, rather than one fixed template repainted 37 times.
 `1-Bit` is the one active in the screenshot at the top of this file.
