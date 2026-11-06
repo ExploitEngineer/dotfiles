@@ -100,3 +100,16 @@ Thumbs.db
 # Entirely HyDE-generated: theme.switch.sh:199-205 writes both Xcursor.theme and
 # Xcursor.size from the active theme, so there is nothing here that is mine.
 .Xresources
+
+# ---- files the wallbash hooks generate on every theme change ---------------
+# Stow can link a whole directory into $HOME, so these would otherwise be
+# written straight into the repository.
+**/.config/lazygit/wallbash.yml
+**/.config/tmux/wallbash.conf
+**/.config/btop/themes/wallbash.theme
+**/.config/yazi/theme.toml
+**/.config/fzf/wallbash.opts
+**/.config/herdr/config.toml
+
+# Python bytecode
+__pycache__/

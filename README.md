@@ -34,7 +34,7 @@ dotfiles/
 ├── cli/        btop, cava, ...     fastfetch, htop
 ├── git/        .gitconfig          git identity and global ignore (opt-in, see Install)
 ├── xdg/        mimeapps.list       default handlers, environment.d
-├── hyde/       .config/hyde        wallbash hooks (video wallpaper, herdr theme)
+├── hyde/       .config/hyde        wallbash hooks (video wallpaper, tool themes)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
 ├── sddm/                           login screen theme + installer (system files, not stowed)
 └── patches/                        fixes for HyDE-owned program files
@@ -45,7 +45,7 @@ kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wall
 
 ## Themes
 
-HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava, neovim and herdr all repainted together.
+HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava, neovim, herdr, lazygit, tmux, yazi, btop and fzf all repainted together.
 Neovim lives in its own repository, [chadvim](https://github.com/ExploitEngineer/chadvim), which reads wallbash's colours itself.
 All 37 tracked themes are below, each shown live: neovim, Dolphin's home folder, fastfetch and cava.
 The window arrangement itself varies per theme too, between a few hand-picked three and four pane layouts, rather than one fixed template repainted 37 times.
@@ -260,20 +260,39 @@ Prefer H.264 or HEVC anyway, both of which are real NVDEC here, as is VP9.
 Measured on a 1080p30 clip: `utilization.decoder` around 5 percent and roughly 417 MiB of VRAM.
 That VRAM figure is worth remembering on a 4 GB card.
 
-## herdr theme
+## Tools that follow the theme
 
-[herdr](https://herdr.dev) has no HyDE integration, only a `[theme.custom]` table in `~/.config/herdr/config.toml`.
-`hyde/.config/hyde/wallbash/scripts/herdr-theme.sh` fills that table from the active theme's `kitty.theme`, so herdr matches the terminal around it.
-It runs from `wallbash/always/herdr.dcol` on every theme and wallpaper change, and reloads a running herdr server, so no restart is needed.
+Most terminal tools know nothing about HyDE, so each one gets a small wallbash hook.
+A hook is two files in the `hyde` package: a one-line `wallbash/always/<tool>.dcol` that tells HyDE to run it, and `wallbash/scripts/<tool>-theme.sh` that writes the tool's colours.
+HyDE runs every hook on each theme and wallpaper change.
 
-- Every HyDE theme ships a `kitty.theme` with literal colours, which is why that file is the source and not wallbash's `dcol_*` variables.
-  It is also read directly rather than through `~/.config/kitty/theme.conf`, which avoids racing the render that writes it.
-- Background, foreground and the red, green, yellow, blue, magenta and cyan ANSI colours map straight across.
+| Tool | What the hook writes | Takes effect |
+|---|---|---|
+| [herdr](https://herdr.dev) | the `[theme.custom]` block in `~/.config/herdr/config.toml` | live, the server is reloaded |
+| lazygit | `~/.config/lazygit/wallbash.yml` | next start |
+| tmux | `~/.config/tmux/wallbash.conf`, sourced by `tmux.conf` | live, running sessions are re-sourced |
+| yazi | `~/.config/yazi/theme.toml` | next start |
+| btop | `~/.config/btop/themes/wallbash.theme` | live, btop is sent `SIGUSR2` |
+| fzf | `~/.config/fzf/wallbash.opts`, loaded through `FZF_DEFAULT_OPTS_FILE` | every new fzf |
+
+Two tools need no hook because they use the terminal's own 16 colours, which every theme already repaints.
+`starship` uses ANSI colour names and `dimmed` in `cli/.config/starship/starship.toml`, and `bat` uses its `ansi` theme in `cli/.config/bat/config`.
+Hex colours in either file would stay fixed on every theme, so keep them to ANSI names.
+
+How the hooks work:
+
+- Colours come from the active theme's `kitty.theme`, which every HyDE theme ships with literal values.
+  Reading it directly avoids racing the render that writes `~/.config/kitty/theme.conf`.
+  The shared code is `hyde/.config/hyde/wallbash/scripts/lib/palette.py`.
+- Background, foreground and the six ANSI colours map straight across.
   The surface and overlay greys are mixed between background and foreground in the same steps Catppuccin uses, so light themes work without a special case.
-- Only the block between the `>>> wallbash >>>` and `<<< wallbash <<<` markers is managed.
-  The rest of `config.toml` is untouched.
-  A hand-written `[theme]` table outside the block makes the script stand down, because TOML forbids defining it twice.
-- Test without touching the real config:
+- A hook owns one generated file and never edits your own config.
+  The exceptions are herdr, where only the block between the `>>> wallbash >>>` and `<<< wallbash <<<` markers is managed, and yazi, whose `theme.toml` is replaced unless you took it over.
+  When you have your own `[theme]` table in herdr or your own `theme.toml` in yazi, the hook stands down.
+- `shell/.config/shell/wallbash-env.sh`, sourced from `.bashrc` and `user.zsh`, points lazygit and fzf at their generated files.
+  fish is not wired up.
+- Test a hook without touching your real config.
+  Each script documents its override variable in its header, for example:
   `HERDR_CONFIG_PATH=/tmp/herdr.toml HYDE_THEME_DIR=~/.config/hyde/themes/Nier ~/.config/hyde/wallbash/scripts/herdr-theme.sh`
 
 ## Patches

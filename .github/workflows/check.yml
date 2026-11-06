@@ -19,7 +19,14 @@ jobs:
           done
 
       - name: Python syntax
-        run: python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" sddm/wallbash/scripts/pick_layout.py
+        run: |
+          for f in sddm/wallbash/scripts/pick_layout.py hyde/.config/hyde/wallbash/scripts/lib/palette.py; do
+            python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$f"
+          done
+          # Hooks embed their Python in a heredoc, which bash -n does not check.
+          for f in hyde/.config/hyde/wallbash/scripts/*-theme.sh; do
+            sed -n "/<<'PY'/,/^PY\$/p" "$f" | sed '1d;$d' | python3 -c "import ast,sys; ast.parse(sys.stdin.read())"
+          done
 
       - name: No hardcoded home directories
         run: |
@@ -34,3 +41,24 @@ jobs:
           sudo apt-get install -y -qq stow
           export HOME="$(mktemp -d)"
           ./install.sh -n
+
+      - name: Theme hooks write valid output
+        run: |
+          export HOME="$(mktemp -d)"
+          export XDG_CONFIG_HOME="$HOME/.config"
+          mkdir -p "$HOME/bin"
+          for t in herdr lazygit tmux yazi btop fzf; do
+            printf '#!/bin/sh\nexit 0\n' > "$HOME/bin/$t"
+            chmod +x "$HOME/bin/$t"
+          done
+          export PATH="$HOME/bin:$PATH"
+          export HYDE_THEME_DIR="$GITHUB_WORKSPACE/hyde/.config/hyde/themes/Catppuccin Mocha"
+          for s in hyde/.config/hyde/wallbash/scripts/*-theme.sh; do
+            echo "run $s"
+            "$s"
+          done
+          for f in herdr/config.toml lazygit/wallbash.yml tmux/wallbash.conf yazi/theme.toml btop/themes/wallbash.theme fzf/wallbash.opts; do
+            test -s "$XDG_CONFIG_HOME/$f" || { echo "missing $f" >&2; exit 1; }
+          done
+          python3 -c "import sys,tomllib; [tomllib.load(open(p,'rb')) for p in sys.argv[1:]]" \
+            "$XDG_CONFIG_HOME/herdr/config.toml" "$XDG_CONFIG_HOME/yazi/theme.toml"

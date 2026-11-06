@@ -55,7 +55,7 @@ If a file is byte-identical to upstream, leave it out.
   A config that only works on one laptop belongs in [docs/machine-notes.md](docs/machine-notes.md) as a note, not in a package.
 - **Match the existing style.**
   Shell scripts are bash with `set -euo pipefail` where they run standalone.
-  Wallbash hooks follow `hyde/.config/hyde/wallbash/scripts/herdr-theme.sh`.
+  Wallbash hooks follow `hyde/.config/hyde/wallbash/scripts/lazygit-theme.sh`, the smallest example.
 - **Documentation puts each sentence on its own line.**
   It keeps diffs small and reviews readable.
 
@@ -66,10 +66,13 @@ A wallbash hook is two files in the `hyde` package:
 - `hyde/.config/hyde/wallbash/always/<tool>.dcol` is one line, `/dev/null|${WALLBASH_SCRIPTS}/<tool>-theme.sh`, and tells HyDE to run the script on every theme and wallpaper change.
 - `hyde/.config/hyde/wallbash/scripts/<tool>-theme.sh` reads the colours and writes the tool's config.
 
-Read colours from `$HYDE_THEME_DIR/kitty.theme`.
-Every HyDE theme ships one with literal values, and reading it avoids a race with the wallbash render that writes `~/.config/kitty/theme.conf`.
+Import `lib/palette.py` rather than parsing colours yourself.
+It reads `$HYDE_THEME_DIR/kitty.theme`, which every HyDE theme ships with literal values, and exposes named roles such as `accent`, `surface1` and `red`.
+Reading that file avoids a race with the wallbash render that writes `~/.config/kitty/theme.conf`.
+If a tool can use the terminal's 16 ANSI colours instead, prefer that and skip the hook, as `starship` and `bat` do.
 Only edit a clearly marked block of the tool's config, and stand down if the user has their own settings there.
-Make the script testable without touching the real config, for example through an environment variable that overrides the config path, as `herdr-theme.sh` does with `HERDR_CONFIG_PATH`.
+Own a generated file where the tool allows it, and add it to the generated-files list in `.gitignore`.
+Make the script testable without touching the real config, for example through an environment variable that overrides the output path, as `herdr-theme.sh` does with `HERDR_CONFIG_PATH`.
 Document the hook in the README.
 
 ## Commit messages
