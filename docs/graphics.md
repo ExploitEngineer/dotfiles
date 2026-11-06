@@ -155,7 +155,7 @@ GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
 ```
 
 `nvidia_drm.modeset=1` is required by Hyprland and must stay.
-See [Machine-specific notes](machine-notes.md) for `nvidia_drm.fbdev=1`, mkinitcpio `MODULES` and the SDDM display server, all of which look like reasonable additions here and all of which break this laptop.
+See [Machine-specific notes](machine-notes.md) for `nvidia_drm.fbdev=1`, mkinitcpio `MODULES` and the SDDM display server, all of which look like reasonable additions here and all of which break the ZBook.
 
 ## Verifying
 

@@ -14,7 +14,7 @@ A package mirrors the path it targets under `$HOME`, so `hypr/.config/hypr/hyprl
 | `desktop` | waybar, browser flags |
 | `terminal` | tmux |
 | `shell` | bash, zsh, fish |
-| `cli` | btop, cava, fastfetch, htop |
+| `cli` | btop, cava, fastfetch, htop, lazygit, starship, bat |
 | `git` | git identity (opt-in, personal) |
 | `xdg` | default applications, environment.d |
 | `hyde` | HyDE wallbash hooks and themes |
