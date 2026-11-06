@@ -10,7 +10,8 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hypr desktop terminal shell cli git xdg hyde dolphin)
+# git is opt-in: it carries a personal name and email. Edit git/.gitconfig, then run: ./install.sh git
+PACKAGES=(hypr desktop terminal shell cli xdg hyde dolphin)
 
 STOW_FLAGS=(--target "$HOME" --dir "$REPO")
 DRY_RUN=0

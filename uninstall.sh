@@ -10,7 +10,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PACKAGES=(hypr desktop terminal shell cli git xdg hyde dolphin)
+PACKAGES=(hypr desktop terminal shell cli git xdg hyde dolphin)  # includes git, so a stray install can always be undone
 
 STOW_FLAGS=(--target "$HOME" --dir "$REPO")
 

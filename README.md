@@ -27,12 +27,12 @@ Each mirrors the path it targets under `$HOME`, so a package can be installed or
 
 ```
 dotfiles/
-├── hypr/       .config/hypr        hyprland.lua, hyprlock, hyprsunset, pyprland
+├── hypr/       .config/hypr        hyprland.lua, hyprsunset, pyprland
 ├── desktop/    .config/waybar      bar layout, browser flags
 ├── terminal/   .config/tmux        tmux
 ├── shell/      .bashrc .profile    bash, zsh (.config/zsh), fish
-├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
-├── git/        .gitconfig          git identity and global ignore
+├── cli/        btop, cava, ...     fastfetch, htop
+├── git/        .gitconfig          git identity and global ignore (opt-in, see Install)
 ├── xdg/        mimeapps.list       default handlers, environment.d
 ├── hyde/       .config/hyde        wallbash hooks (video wallpaper, herdr theme)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
@@ -45,7 +45,8 @@ kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wall
 
 ## Themes
 
-HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava and neovim (via `cli/.config/nvim/lua/wallbash_theme.lua`) all repainted together.
+HyDE drives theming from the active wallpaper through wallbash, and every theme below is a full set: wallpaper, GTK/Qt colours, waybar, rofi, kitty, dunst, cava, neovim and herdr all repainted together.
+Neovim lives in its own repository, [chadvim](https://github.com/ExploitEngineer/chadvim), which reads wallbash's colours itself.
 All 37 tracked themes are below, each shown live: neovim, Dolphin's home folder, fastfetch and cava.
 The window arrangement itself varies per theme too, between a few hand-picked three and four pane layouts, rather than one fixed template repainted 37 times.
 `1-Bit` is the one active in the screenshot at the top of this file.
@@ -144,6 +145,23 @@ No GraphicalEffects or shaders anywhere, given this machine's GPU history; blur 
 Install HyDE first.
 This repository layers on top of it and does not replace it.
 
+### Make it yours before you run it
+
+This started as one person's laptop, so a few files describe that laptop.
+Read this list first.
+
+- **Git identity.** The `git` package is not installed by default, because `git/.gitconfig` carries someone else's name and email.
+  Put your own in it, then run `./install.sh git`.
+- **Monitors.** `hypr/.config/hypr/monitors.lua` pins a 1920x1080 panel called `eDP-1`.
+  Delete it and generate your own with `nwg-displays`, or edit the output name and mode.
+  `hyprland.lua` falls back to a safe rule when the file is missing.
+- **NVIDIA.** The graphics notes and the Brave launcher assume a hybrid laptop with an NVIDIA card.
+  Skip [Graphics](#graphics) entirely on AMD or Intel.
+- **Neovim.** Not part of this repository.
+  Clone [chadvim](https://github.com/ExploitEngineer/chadvim) into `~/.config/nvim` if you want it.
+- **Existing files.** Stow refuses to overwrite a real file.
+  Run `./install.sh -n` first, and move aside anything it reports as a conflict.
+
 ```sh
 sudo pacman -S stow
 git clone git@github.com:ExploitEngineer/dotfiles.git ~/dotfiles
@@ -204,7 +222,7 @@ done
 HyDE repaints a lot of configuration from the active wallpaper through wallbash.
 Tracking that output would produce a diff on every theme change and would be overwritten on restore anyway.
 
-Excluded for that reason: `hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, and the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum` and `vim`.
+Excluded for that reason: `hypr/hyprlock.conf` (HyDE writes an absolute `/home/<user>` path into it on every layout change), `hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, and the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum` and `vim`.
 Compiled shader and zsh completion caches are excluded too.
 
 Two files needed more than a gitignore entry, because both looked like ordinary configuration:
