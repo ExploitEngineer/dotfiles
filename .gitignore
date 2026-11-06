@@ -28,33 +28,33 @@ credentials
 secrets.*
 
 # ---- tools that store API keys --------------------------------------------
-.config/gh/
-.config/nuclei/
-.config/subfinder/
-.config/uncover/
-.config/amass/
-.config/katana/
-.config/ffuf/
-.config/feroxbuster/
+**/.config/gh/
+**/.config/nuclei/
+**/.config/subfinder/
+**/.config/uncover/
+**/.config/amass/
+**/.config/katana/
+**/.config/ffuf/
+**/.config/feroxbuster/
 .wakatime.cfg
 .msf4/
 .BurpSuite/
 
 # ---- tools that store saved connections / passwords -----------------------
-.config/remmina/
-.config/beekeeper-studio/
-.config/MongoDB Compass/
-.config/qBittorrent/
-.config/tigervnc/
+**/.config/remmina/
+**/.config/beekeeper-studio/
+**/.config/MongoDB Compass/
+**/.config/qBittorrent/
+**/.config/tigervnc/
 
 # ---- browser profiles (cookies, saved passwords) --------------------------
-.config/BraveSoftware/
-.config/chromium/
-.config/google-chrome*/
-.config/microsoft-edge/
-.config/mozilla/
-.config/opera/
-.config/vivaldi/
+**/.config/BraveSoftware/
+**/.config/chromium/
+**/.config/google-chrome*/
+**/.config/microsoft-edge/
+**/.config/mozilla/
+**/.config/opera/
+**/.config/vivaldi/
 .pki/
 
 # ---- shell and tool history -----------------------------------------------
@@ -79,17 +79,19 @@ __pycache__/
 *.tmp
 
 # ---- HyDE writes these per theme; they churn on every wallpaper change ----
-.config/hypr/themes/
-.config/hypr/shaders/.compiled.cache.glsl
-.config/waybar/includes/
-.config/waybar/modules/
+**/.config/hypr/themes/
+**/.config/hypr/shaders/.compiled.cache.glsl
+# HyDE writes absolute /home/<user> paths into this one and rewrites it on every layout change
+**/.config/hypr/hyprlock.conf
+**/.config/waybar/includes/
+**/.config/waybar/modules/
 
 # ---- rewritten by HyDE on every theme switch (theme/cursor/icon/font names) --
-.config/gtk-3.0/settings.ini
+**/.config/gtk-3.0/settings.ini
 .gtkrc-2.0
-.config/xsettingsd/xsettingsd.conf
-.config/qt5ct/qt5ct.conf
-.config/qt6ct/qt6ct.conf
+**/.config/xsettingsd/xsettingsd.conf
+**/.config/qt5ct/qt5ct.conf
+**/.config/qt6ct/qt6ct.conf
 
 # ---- OS noise -------------------------------------------------------------
 .DS_Store
