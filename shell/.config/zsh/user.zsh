@@ -39,3 +39,6 @@ if [[ ${HYDE_ZSH_NO_PLUGINS} != "1" ]]; then
         "sudo"
     )
 fi
+
+# Theme-driven tool config written by the wallbash hooks
+[ -f "$HOME/.config/shell/wallbash-env.sh" ] && . "$HOME/.config/shell/wallbash-env.sh"
