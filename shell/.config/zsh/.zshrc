@@ -110,9 +110,6 @@ export PATH=$PATH:$HOME/go/bin
 # export NVM_DIR="$HOME/.config/nvm"
 # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
 # . "/home/mr_robot/.deno/env"
 
 # pnpm
@@ -122,7 +119,3 @@ case ":$PATH:" in
 *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
 # pnpm end
-export PATH="$HOME/.npm-global/bin:$PATH"
-
-# bun completions
-[ -s "/home/mr_robot/.bun/_bun" ] && source "/home/mr_robot/.bun/_bun"
