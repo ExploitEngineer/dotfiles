@@ -156,7 +156,7 @@ Read this list first.
   Delete it and generate your own with `nwg-displays`, or edit the output name and mode.
   `hyprland.lua` falls back to a safe rule when the file is missing.
 - **NVIDIA.** The graphics notes and the Brave launcher assume a hybrid laptop with an NVIDIA card.
-  Skip [Graphics](#graphics) entirely on AMD or Intel.
+  Skip [Graphics](docs/graphics.md) entirely on AMD or Intel.
 - **Neovim.** Not part of this repository.
   Clone [chadvim](https://github.com/ExploitEngineer/chadvim) into `~/.config/nvim` if you want it.
 - **Existing files.** Stow refuses to overwrite a real file.
@@ -189,106 +189,11 @@ All three are documented with their exact contents:
 
 | File | Documented under |
 |---|---|
-| `/etc/environment` | [Graphics](#graphics) |
-| `/etc/default/grub` kernel command line | [Graphics](#graphics), [Machine-specific notes](#machine-specific-notes) |
+| `/etc/environment` | [Graphics](docs/graphics.md) |
+| `/etc/default/grub` kernel command line | [Graphics](docs/graphics.md), [Machine-specific notes](docs/machine-notes.md) |
 | `/etc/systemd/journald.conf.d/00-size.conf` | `SystemMaxUse=500M`, or the journal grows unbounded |
 
 Also install `libva-nvidia-driver` and `libva-utils`, and enable `fstrim.timer`, which is off by default on Arch.
-
-### The working copy is not stowed
-
-`install.sh` symlinks these packages into `$HOME` with GNU stow, but on the machine this repository was built from, nothing under `~/.config` is a symlink.
-Every live file is a plain copy, so edits made in place never reach the repository and have to be copied back out by hand.
-
-That is not a theoretical problem.
-Six files had silently drifted before the last sync: `btop.conf`, `cava/config`, `waybar/config.jsonc`, `hyprland.lua`, `.Xresources` and `mimeapps.list`.
-
-Until `install.sh` is actually applied, treat this repository as a manual mirror and check for drift before trusting it:
-
-```sh
-strip() { sed '/### Auto generated wallbash colors ###/,$d' "$1"; }
-for f in $(git ls-files | grep / | grep -v '^patches/'); do
-  live="$HOME/${f#*/}"
-  [ -f "$live" ] || { echo "missing: ${f#*/}"; continue; }
-  diff -q <(strip "$live") <(strip "$f") >/dev/null || echo "drift: ${f#*/}"
-done
-```
-
-`strip` drops the wallbash block so a wallpaper change does not read as drift.
-`patches/` is skipped because those files are deployed by `patch`, not by stow, so they have no counterpart under `$HOME`.
-
-## Generated files are not tracked
-
-HyDE repaints a lot of configuration from the active wallpaper through wallbash.
-Tracking that output would produce a diff on every theme change and would be overwritten on restore anyway.
-
-Excluded for that reason: `hypr/hyprlock.conf` (HyDE writes an absolute `/home/<user>` path into it on every layout change), `hypr/themes/`, `waybar/theme.css`, `waybar/style.css`, `waybar/includes/`, `rofi/theme.rasi`, `dunst/dunstrc`, `kitty/theme.conf`, and the `wallbash` colour files under `qt5ct`, `qt6ct`, `Kvantum` and `vim`.
-Compiled shader and zsh completion caches are excluded too.
-
-Two files needed more than a gitignore entry, because both looked like ordinary configuration:
-
-`.Xresources` is gone entirely, and the `theme/` package with it.
-Both of its lines, `Xcursor.theme` and `Xcursor.size`, are written by `theme.switch.sh:199-205` from the active theme, so none of it was ever mine.
-It changed on every theme switch and showed as drift each time.
-
-`cava/config` is kept, because the first 330 lines are real configuration, but everything from `### Auto generated wallbash colors ###` down is wallbash output that `cava.sh:23` deletes and regenerates on every wallpaper change.
-The tracked copy is truncated at that marker, and a `clean` filter declared in `.gitattributes` strips the block on staging so it cannot come back.
-`cava.sh` re-appends the marker when it is missing, so a fresh checkout recovers on the first wallpaper set.
-
-Git filters live in `.git/config`, which is not cloned, so `install.sh` registers this one.
-Without it git treats the filter name as identity: nothing breaks, the block simply is not stripped.
-
-## Machine-specific notes
-
-Fixes for this particular laptop, kept so a future restore does not have to rediscover them.
-All live in `hypr/.config/hypr/hyprland.lua`.
-
-**Display scale.**
-Hyprland's built-in default is `,preferred,auto,auto`, and `auto` resolves to scale 1.5 on this panel, reducing a 1920x1080 display to a 1280x720 logical desktop.
-Scale is pinned to 1.0.
-`nwg-displays` writes `monitors.lua`, but nothing in HyDE's Lua chain requires that file, so `hyprland.lua` loads it explicitly and falls back to a known-good rule if it is missing.
-
-**Numlock.**
-HyDE sets `input.numlock_by_default = true`.
-On this keyboard the embedded numpad overlay rides on numlock, which turns `u i o j k l m p` into `4 5 6 1 2 3 0 *`.
-It is forced off.
-
-**Brightness keys.**
-This machine never emits `XF86MonBrightnessUp` or `XF86MonBrightnessDown`, so HyDE's stock hardware bindings cannot fire.
-Sweeping the function row produces only volume and mic-mute keysyms.
-Brightness is bound to `SUPER + SHIFT + Up` and `SUPER + SHIFT + Down`, and to bare `F3` and `F4`, which is what `fn`+`F3` and `fn`+`F4` send while HP Action Keys mode is active.
-
-**Fullscreen and pin.**
-The Lua migration moved fullscreen from `SUPER + F` to `SUPER + F11`, and promoted pin from `SUPER + SHIFT + F` to `SUPER + F`.
-`SUPER + F11` is unreachable here: with Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the binding never fires and the keypress disables wifi instead.
-Both are restored to their previous positions.
-
-**Blue light filter.**
-HyDE ships a `blue-light-filter` screen shader and enables `hyprsunset`, which together tint the display.
-The shader is set to `disable` and hyprsunset is left at a neutral 6500K.
-
-**Two boot changes that look sensible and are not.**
-Both were tried on 2026-08-29 and both broke the machine.
-
-`DisplayServer=wayland` in `/etc/sddm.conf.d/`.
-SDDM cannot bring up a Wayland greeter here, falls back to `sddm-helper-start-x11user`, and that Xorg segfaults inside `libGLX_nvidia.so.0`.
-The greeter then dies and respawns forever, which presents as being thrown back to the login screen over and over, and as a correct password being refused once `pam_faillock` counts the crashed authentications as failures.
-The X11 greeter works fine; leave it alone.
-The only thing the change buys is 63 MiB of VRAM from the `-noreset` Xorg that SDDM leaves resident.
-
-`MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)` in `/etc/mkinitcpio.conf`.
-The `modconf` hook then pulls in all 206 MB of `/usr/lib/firmware/nvidia`, producing a 298 MB initramfs against a normal 122 MB.
-On this laptop that hangs the boot at a black screen followed by a white screen.
-It is also redundant: `HOOKS` already contains `kms`, which handles KMS module loading, and `nvidia_drm.modeset=1` on the kernel command line is what Hyprland actually needs.
-
-Known-good kernel command line:
-
-```
-GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
-```
-
-`nvidia_drm.fbdev=1` adds nothing here.
-`quiet` must not be combined with `loglevel=7`, since it pins the console loglevel to 4 and whichever parses last wins.
 
 ## Dolphin
 
@@ -403,213 +308,24 @@ Removing the `swaync` package is **not** a durable fix, which took a HyDE update
 The fix that holds is `patches/0003-swaync-guard-daemon-running.patch`, which makes the script exit early unless a swaync daemon is actually running.
 Reapply it after every HyDE update along with the others.
 
-## Graphics
+## More documentation
 
-NVIDIA Quadro P1000 Mobile (GP107GLM), 4 GB, driver 580, `nvidia-580xx-dkms` from chaotic-aur.
-Single GPU: there is no Intel iGPU visible to the OS on this machine, so nothing here is about hybrid graphics or PRIME offload.
-
-This section is the whole story, so it does not have to be rediscovered or re-explained.
-
-### Hybrid graphics was tried and reverted (2026-10-09)
-
-The BIOS graphics mode was switched from discrete-only to Hybrid for a few hours on 2026-10-09, to see whether moving the Intel UHD P630 iGPU onto scanout duty (keeping NVIDIA offload-only) would reduce exposure to the BAR1-exhaustion Xid faults documented below.
-Reverted the same day after two live Hyprland crashes.
-
-What worked: PRIME render offload to NVIDIA for GLX/EGL apps, confirmed via `nvidia-smi`.
-What didn't: Chromium/Brave under Wayland ignores PRIME offload env vars entirely and needs an explicit `--render-node-override` instead; Intel had no Vulkan driver installed out of the box, breaking WebGPU on some sites until `vulkan-intel` and `intel-media-driver` were installed.
-
-What ended it: a `coredumpctl` trace caught Hyprland itself aborting mid-frame, not an NVIDIA Xid fault.
-
-```
-CMonitorFrameScheduler::onFrame -> renderMonitor -> CHyprGLRenderer::endRender
--> CEGLSync::create -> Mesa EGL -> libgallium (Intel's driver) -> abort
-```
-
-Crashed inside Mesa's Intel Gallium driver during EGL sync-fence creation on a DRM page flip, and the crashed process was already running with `--watchdog-fd --safe-mode`, meaning it was not the first occurrence that session.
-`awww-daemon` and waybar both aborted in the same instant, consistent with losing the compositor out from under them.
-Root cause not isolated beyond that trace (plain Mesa/iGPU bug vs. a cross-GPU buffer-sync issue between Intel scanout and NVIDIA offload are both plausible), and was not worth chasing further given the discrete-only baseline is a known, already-diagnosed quantity.
-
-Net effect: trading the known Xid 79 / BAR1 risk for an unknown Mesa/Intel compositor-crash risk was not a clear improvement, so back to discrete-only.
-If this is tried again, start from `git log --diff-filter=D -- 'hypr/.config/hypr/scripts/nvidia-offload.sh' 'hypr/.config/hypr/scripts/brave-nvidia.sh' 'xdg/.local/share/applications/brave-browser-beta-nvidia.desktop'` for the PRIME offload wrapper and the NVIDIA-pinned Brave launcher, both working, just removed as dead weight once there was only one GPU again.
-
-### The GPU was never the problem
-
-Rendering has always been on the Quadro.
-Hyprland, kitty, Brave and Xwayland all hold memory on it, Hyprland runs on the `drm` backend against the NVIDIA module, and Brave's GPU process opens `/dev/dri/renderD128`.
-
-What was missing is **hardware video decode**.
-`libva` was installed but `libva-nvidia-driver` was not, so there was no `nvidia_drv_video.so` under `/usr/lib/dri/`, and every browser and Electron app decoded video on the CPU.
-That is what "the system is not using the GPU" actually meant: high CPU on video, fans, heat.
-It was structurally impossible for `utilization.decoder` to leave 0.
-
-### HyDE's environment mechanism emits nothing
-
-`~/.local/share/hypr/lua/env.lua` sets `LIBVA_DRIVER_NAME`, `__GLX_VENDOR_LIBRARY_NAME` and `GBM_BACKEND` through `hl.env()`, and `variables.lua` sets `MOZ_ENABLE_WAYLAND` and `ELECTRON_OZONE_PLATFORM_HINT` the same way.
-None of them arrive.
-The compiled config at `~/.local/state/hyde/hyprland.conf` contains **zero** `env =` lines, and reading `/proc/<pid>/environ` for waybar, kitty and Hyprland itself finds none of these variables set.
-
-Do not try to fix this by editing `env.lua` or by adding `hl.env()` calls to `userprefs.lua`.
-Both go through the same mechanism and both do nothing.
-
-Two further things defeat the Hyprland-side approach even where it works.
-waybar is started by `systemd --user`, not by Hyprland, so a Hyprland `env =` line would never reach it.
-And SDDM starts the session through a login shell rather than the systemd user manager, so `~/.config/environment.d` alone does not reach Hyprland either.
-
-### Where the variables actually live
-
-Two files, because neither one covers both cases.
-Only the second is in this repository; `/etc/environment` is a system file and has to be recreated by hand.
-
-| File | In repo | Covers |
-|---|---|---|
-| `/etc/environment` | no | the whole session, via `session required pam_env.so` in `/etc/pam.d/system-auth`, which `/etc/pam.d/sddm` includes. Reaches Hyprland and everything it launches. |
-| `~/.config/environment.d/10-nvidia-vaapi.conf` | `xdg/` | systemd user units, which is what waybar is |
-
-Both contain the same five lines:
-
-```sh
-LIBVA_DRIVER_NAME=nvidia
-NVD_BACKEND=direct
-__GLX_VENDOR_LIBRARY_NAME=nvidia
-MOZ_ENABLE_WAYLAND=1
-ELECTRON_OZONE_PLATFORM_HINT=auto
-```
-
-`GBM_BACKEND=nvidia-drm` is deliberately **not** set.
-It is no longer recommended on driver 580 and is a known cause of Firefox crashes.
-
-### Packages
-
-```sh
-sudo pacman -S --needed libva-nvidia-driver libva-utils
-```
-
-`libva-nvidia-driver` provides `/usr/lib/dri/nvidia_drv_video.so`, which is the whole fix.
-`libva-utils` provides `vainfo` and is only needed to verify.
-
-### Browser flags
-
-The filename matters.
-`/usr/bin/brave-beta` reads `$XDG_CONFIG_HOME/brave-beta-flags.conf`, so a file named `brave-flags.conf` is silently ignored and nothing tells you.
-Chrome reads `chrome-flags.conf`.
-Both are in `desktop/` and both contain:
-
-```
---ozone-platform-hint=auto
---enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncodeLinuxGL,AcceleratedVideoDecodeLinuxGL
---disable-features=UseChromeOSDirectVideoDecoder
-```
-
-### BAR1 exhaustion: why browsers crash the whole desktop
-
-The Quadro P1000 is Pascal GP107 with **BAR1 = 256 MiB and no resizable BAR**.
-BAR1 is the only CPU-mappable window into the 4 GB of VRAM, and on Pascal it cannot be enlarged.
-
-Under Chromium GPU workload that address space exhausts, `__nv_drm_gem_nvkms_map` then requests a range past the BAR boundary, and the kernel rejects it.
-That is the `Failed to map NvKmsKapiMemory` in the journal.
-It is documented upstream as [NVIDIA/open-gpu-kernel-modules#1134](https://github.com/NVIDIA/open-gpu-kernel-modules/issues/1134).
-
-The failure escalates:
-
-```
-BAR1 VA exhausted
-  -> Failed to map NvKmsKapiMemory        single tab freezes
-  -> Xid 32 corrupted push buffer         every GPU client at once
-  -> Hyprland SIGABRT                     desktop dies, hard power-off
-```
-
-On 2026-08-29 the escalated form fired: 135 Xid 32 errors in one instant across kitty, brave, Xwayland, Xorg, Hyprland and a udev-worker.
-
-**Do not enable VA-API on this card.**
-Every decoded frame costs another BAR1 mapping on a window that is already the bottleneck, and turning it on is what took the failure from frozen tabs to a dead compositor.
-`nvidia-vaapi-driver`'s own README calls Chromium support experimental with "not much success".
-Its EGL backend is broken on drivers 525 and later, so `NVD_BACKEND=egl` is not a safe fallback either; `direct` is the only working backend and it is the one that failed here.
-
-Video therefore decodes on CPU. That is the correct trade on a 256 MiB BAR1.
-
-The browser flags in `desktop/` keep GPU rendering and rasterization enabled, which is what makes 3D and animated pages fast, while removing the per-frame mappings:
-
-| Flag | Why |
+| Page | Covers |
 |---|---|
-| `--disable-features=AcceleratedVideoDecodeLinuxZeroCopyGL` | zero-copy maps a GPU buffer per frame straight into BAR1, the largest single source of pressure |
-| `--disable-gpu-memory-buffer-video-frames` | stops video frames being allocated as mapped GPU memory buffers |
-| `--ozone-platform-hint=auto` | native Wayland, unrelated to the fault |
+| [docs/graphics.md](docs/graphics.md) | NVIDIA setup, VA-API, browser flags, why browsers crashed the desktop |
+| [docs/machine-notes.md](docs/machine-notes.md) | Fixes for the author's laptop, and the Hyprland `.conf` to Lua migration |
+| [docs/maintaining.md](docs/maintaining.md) | Why some files are not tracked, and how to check for drift |
 
-Check flag names against the binary before adding any more.
-`VaapiVideoDecodeLinuxGL` was set here for a while and does not exist in Brave 152:
+## Contributing
 
-```sh
-grep -ac -- "SomeFeatureName" /opt/brave.com/brave-beta/brave
-```
+Pull requests are welcome, especially hooks that make another tool follow the active HyDE theme.
+[CONTRIBUTING.md](CONTRIBUTING.md) explains the layout, the rules and how to test a change without touching your own setup.
 
-If a crash ever recurs, `--ozone-platform=x11` drops Brave to XWayland and avoids the compositor buffer path entirely.
+## License
 
-Watch for recurrence with:
+[MIT](LICENSE).
+Use any of it, change it, share it.
 
-```sh
-journalctl -b -q | grep -c "NVRM: Xid"
-```
+## Author
 
-### Kernel command line
-
-```
-GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
-```
-
-`nvidia_drm.modeset=1` is required by Hyprland and must stay.
-See [Machine-specific notes](#machine-specific-notes) for `nvidia_drm.fbdev=1`, mkinitcpio `MODULES` and the SDDM display server, all of which look like reasonable additions here and all of which break this laptop.
-
-### Verifying
-
-```sh
-vainfo | grep -E "Driver version|VAProfileH264High|VAProfileVP9Profile0"
-```
-
-Expect `VA-API NVDEC driver [direct backend]` and a list of `VAEntrypointVLD` profiles.
-If it reports a different driver or fails outright, `libva-nvidia-driver` is missing or `LIBVA_DRIVER_NAME` is not reaching the process.
-
-Confirm the variables actually arrive somewhere that is not your shell, since a shell can inherit them by other routes:
-
-```sh
-tr '\0' '\n' < /proc/$(pgrep -x waybar)/environ | grep -iE "LIBVA|NVD_BACKEND"
-```
-
-Watch decode do real work.
-`utilization.decoder` stays at 0 until a video actually plays, and VA-API drivers load lazily, so an idle check proves nothing:
-
-```sh
-watch -n1 nvidia-smi --query-gpu=utilization.gpu,utilization.decoder,memory.used --format=csv
-```
-
-In Brave, `brave://gpu` should report **Video Decode: Hardware accelerated**.
-
-Day to day the GPU is already on the bar: `custom/gpuinfo` sits in `group/pill#left1` and its tooltip gives temperature, utilisation and clocks.
-`btop` has an NVIDIA panel too, toggled with `5`.
-Neither shows decode; `nvtop` does, with dedicated DEC and ENC columns.
-
-The tooltip's `Power Usage: [N/A]/[N/A] W` is not a fault.
-The P1000 Mobile does not expose `power.draw` to nvidia-smi.
-
-## Legacy configuration files
-
-A HyDE update moved the framework from `.conf` files to a Lua configuration chain.
-`~/.config/hypr/hyprland.conf` is no longer read, which silently orphaned every file it used to source.
-
-Nine such files were tracked here as a record of the pre-migration state: `animations.conf`, `hyprland.conf`, `keybindings.conf`, `monitors.conf`, `nvidia.conf`, `shaders.conf`, `userprefs.conf`, `windowrules.conf` and `workflows.conf`.
-None of them had a live counterpart under `~/.config/hypr` any more.
-
-They have been removed from the working tree.
-The record is not lost: `git log --diff-filter=D -- 'hypr/.config/hypr/*.conf'` finds the commit that removed them, and the files can be read at the commit before it.
-
-`nvidia.conf` is the one worth knowing about.
-It held the VA-API and cursor settings, and it had been dead since the migration, which is part of why hardware video decode was never configured.
-Its useful content now lives in `/etc/environment` and `~/.config/environment.d`, described under [Graphics](#graphics).
-
-Active configuration lives in `hyprland.lua`, which loads `keybindings.lua` last so it overrides HyDE's defaults.
-
-`keybindings.lua` restores the pre-migration keyboard layout.
-Only the bindings that actually changed are listed there, 27 of them; the remaining ~80 already match HyDE's current defaults and are left alone.
-Verified against the old config: no binding is missing, and the handful that still report a difference differ only in their description text, not in the command they run.
-
-Two old commands no longer exist upstream and were remapped.
-`$scrPath/dontkillsteam.sh` became `hl.dsp.window.close()`, and `wbarconfgen` became `hyde-shell waybar -n` and `-p`.
+Made by [ExploitEngineer](https://github.com/ExploitEngineer).

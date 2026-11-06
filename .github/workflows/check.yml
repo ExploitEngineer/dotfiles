@@ -1,0 +1,36 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          for f in install.sh uninstall.sh hyde/.config/hyde/wallbash/scripts/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f"
+          done
+
+      - name: Python syntax
+        run: python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" sddm/wallbash/scripts/pick_layout.py
+
+      - name: No hardcoded home directories
+        run: |
+          if git grep -n -I -P '/home/(?!user\b)[a-z_][a-z0-9_-]*' -- . ':!assets' ':!docs' ':!README.md' ':!CONTRIBUTING.md' ':!.github' ':!patches'; then
+            echo "Use \$HOME or ~ instead of an absolute home directory." >&2
+            exit 1
+          fi
+
+      - name: Install dry run
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq stow
+          export HOME="$(mktemp -d)"
+          ./install.sh -n
