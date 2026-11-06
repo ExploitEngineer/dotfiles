@@ -5,7 +5,7 @@
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-unset -f command_not_found_handler
+((${+functions[command_not_found_handler]})) && unset -f command_not_found_handler
 unset HYDE_ZSH_DEFER
 ZSH_THEME="robbyrussell"
 
@@ -110,10 +110,9 @@ export PATH=$PATH:$HOME/go/bin
 # export NVM_DIR="$HOME/.config/nvm"
 # [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# . "/home/mr_robot/.deno/env"
 
 # pnpm
-export PNPM_HOME="/home/mr_robot/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
 *":$PNPM_HOME/bin:"*) ;;
 *) export PATH="$PNPM_HOME/bin:$PATH" ;;
