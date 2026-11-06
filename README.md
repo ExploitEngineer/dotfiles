@@ -41,7 +41,7 @@ dotfiles/
 ```
 
 Not every configured program appears here.
-kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wallbash output, so there is nothing of mine to track.
+kitty, rofi, dunst and wlogout are configured entirely by HyDE defaults and wallbash output, so there is nothing custom to track.
 
 ## Themes
 

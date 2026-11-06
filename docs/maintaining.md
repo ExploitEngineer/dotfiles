@@ -4,7 +4,7 @@ How the working copy relates to the repository, and which files are deliberately
 
 ## The working copy is not stowed
 
-`install.sh` symlinks these packages into `$HOME` with GNU stow, but on the machine this repository was built from, nothing under `~/.config` is a symlink.
+`install.sh` symlinks these packages into `$HOME` with GNU stow, but on the author's machine, nothing under `~/.config` is a symlink.
 Every live file is a plain copy, so edits made in place never reach the repository and have to be copied back out by hand.
 
 That is not a theoretical problem.
@@ -35,7 +35,7 @@ Compiled shader and zsh completion caches are excluded too.
 Two files needed more than a gitignore entry, because both looked like ordinary configuration:
 
 `.Xresources` is gone entirely, and the `theme/` package with it.
-Both of its lines, `Xcursor.theme` and `Xcursor.size`, are written by `theme.switch.sh:199-205` from the active theme, so none of it was ever mine.
+Both of its lines, `Xcursor.theme` and `Xcursor.size`, are written by `theme.switch.sh:199-205` from the active theme, so none of it was ever hand-written configuration.
 It changed on every theme switch and showed as drift each time.
 
 `cava/config` is kept, because the first 330 lines are real configuration, but everything from `### Auto generated wallbash colors ###` down is wallbash output that `cava.sh:23` deletes and regenerates on every wallpaper change.

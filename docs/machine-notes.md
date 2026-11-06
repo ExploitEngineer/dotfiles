@@ -1,28 +1,29 @@
 # Machine-specific notes
 
-Fixes for the laptop this repository was built on, plus the history of the Hyprland configuration migration.
+Fixes for the HP ZBook Studio x360 G5 this repository was built on, plus the history of the Hyprland configuration migration.
 They are kept so a future restore does not have to rediscover them.
+On different hardware, read each item as a worked example and check whether it applies to you.
 
 The fixes below all live in `hypr/.config/hypr/hyprland.lua`.
 
 **Display scale.**
-Hyprland's built-in default is `,preferred,auto,auto`, and `auto` resolves to scale 1.5 on this panel, reducing a 1920x1080 display to a 1280x720 logical desktop.
+Hyprland's built-in default is `,preferred,auto,auto`, and `auto` resolves to scale 1.5 on the ZBook's panel, reducing a 1920x1080 display to a 1280x720 logical desktop.
 Scale is pinned to 1.0.
 `nwg-displays` writes `monitors.lua`, but nothing in HyDE's Lua chain requires that file, so `hyprland.lua` loads it explicitly and falls back to a known-good rule if it is missing.
 
 **Numlock.**
 HyDE sets `input.numlock_by_default = true`.
-On this keyboard the embedded numpad overlay rides on numlock, which turns `u i o j k l m p` into `4 5 6 1 2 3 0 *`.
+On the ZBook's keyboard the embedded numpad overlay rides on numlock, which turns `u i o j k l m p` into `4 5 6 1 2 3 0 *`.
 It is forced off.
 
 **Brightness keys.**
-This machine never emits `XF86MonBrightnessUp` or `XF86MonBrightnessDown`, so HyDE's stock hardware bindings cannot fire.
+The ZBook never emits `XF86MonBrightnessUp` or `XF86MonBrightnessDown`, so HyDE's stock hardware bindings cannot fire.
 Sweeping the function row produces only volume and mic-mute keysyms.
 Brightness is bound to `SUPER + SHIFT + Up` and `SUPER + SHIFT + Down`, and to bare `F3` and `F4`, which is what `fn`+`F3` and `fn`+`F4` send while HP Action Keys mode is active.
 
 **Fullscreen and pin.**
 The Lua migration moved fullscreen from `SUPER + F` to `SUPER + F11`, and promoted pin from `SUPER + SHIFT + F` to `SUPER + F`.
-`SUPER + F11` is unreachable here: with Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the binding never fires and the keypress disables wifi instead.
+`SUPER + F11` is unreachable on the ZBook: with Action Keys mode on, bare F11 emits the wireless-toggle keysym, so the binding never fires and the keypress disables wifi instead.
 Both are restored to their previous positions.
 
 **Blue light filter.**
@@ -33,14 +34,14 @@ The shader is set to `disable` and hyprsunset is left at a neutral 6500K.
 Both were tried on 2026-08-29 and both broke the machine.
 
 `DisplayServer=wayland` in `/etc/sddm.conf.d/`.
-SDDM cannot bring up a Wayland greeter here, falls back to `sddm-helper-start-x11user`, and that Xorg segfaults inside `libGLX_nvidia.so.0`.
+SDDM cannot bring up a Wayland greeter on the ZBook, falls back to `sddm-helper-start-x11user`, and that Xorg segfaults inside `libGLX_nvidia.so.0`.
 The greeter then dies and respawns forever, which presents as being thrown back to the login screen over and over, and as a correct password being refused once `pam_faillock` counts the crashed authentications as failures.
 The X11 greeter works fine; leave it alone.
 The only thing the change buys is 63 MiB of VRAM from the `-noreset` Xorg that SDDM leaves resident.
 
 `MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)` in `/etc/mkinitcpio.conf`.
 The `modconf` hook then pulls in all 206 MB of `/usr/lib/firmware/nvidia`, producing a 298 MB initramfs against a normal 122 MB.
-On this laptop that hangs the boot at a black screen followed by a white screen.
+On the ZBook that hangs the boot at a black screen followed by a white screen.
 It is also redundant: `HOOKS` already contains `kms`, which handles KMS module loading, and `nvidia_drm.modeset=1` on the kernel command line is what Hyprland actually needs.
 
 Known-good kernel command line:
@@ -49,7 +50,7 @@ Known-good kernel command line:
 GRUB_CMDLINE_LINUX_DEFAULT="nvidia_drm.modeset=1 loglevel=7"
 ```
 
-`nvidia_drm.fbdev=1` adds nothing here.
+`nvidia_drm.fbdev=1` adds nothing on the ZBook.
 `quiet` must not be combined with `loglevel=7`, since it pins the console loglevel to 4 and whichever parses last wins.
 
 ## Legacy configuration files

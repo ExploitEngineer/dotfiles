@@ -1,10 +1,10 @@
 # Graphics
 
-Notes from an HP ZBook with an NVIDIA Quadro P1000 on Arch.
+Notes from an HP ZBook Studio x360 G5 with an NVIDIA Quadro P1000 on Arch.
 Skip this page on AMD or Intel graphics.
 
 NVIDIA Quadro P1000 Mobile (GP107GLM), 4 GB, driver 580, `nvidia-580xx-dkms` from chaotic-aur.
-Single GPU: there is no Intel iGPU visible to the OS on this machine, so nothing here is about hybrid graphics or PRIME offload.
+Single GPU: there is no Intel iGPU visible to the OS on the ZBook, so nothing on this page is about hybrid graphics or PRIME offload.
 
 This section is the whole story, so it does not have to be rediscovered or re-explained.
 
@@ -118,7 +118,7 @@ BAR1 VA exhausted
 
 On 2026-08-29 the escalated form fired: 135 Xid 32 errors in one instant across kitty, brave, Xwayland, Xorg, Hyprland and a udev-worker.
 
-**Do not enable VA-API on this card.**
+**Do not enable VA-API on the Quadro P1000.**
 Every decoded frame costs another BAR1 mapping on a window that is already the bottleneck, and turning it on is what took the failure from frozen tabs to a dead compositor.
 `nvidia-vaapi-driver`'s own README calls Chromium support experimental with "not much success".
 Its EGL backend is broken on drivers 525 and later, so `NVD_BACKEND=egl` is not a safe fallback either; `direct` is the only working backend and it is the one that failed here.
@@ -134,7 +134,7 @@ The browser flags in `desktop/` keep GPU rendering and rasterization enabled, wh
 | `--ozone-platform-hint=auto` | native Wayland, unrelated to the fault |
 
 Check flag names against the binary before adding any more.
-`VaapiVideoDecodeLinuxGL` was set here for a while and does not exist in Brave 152:
+`VaapiVideoDecodeLinuxGL` was set for a while and does not exist in Brave 152:
 
 ```sh
 grep -ac -- "SomeFeatureName" /opt/brave.com/brave-beta/brave
