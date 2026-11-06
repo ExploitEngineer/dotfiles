@@ -1,0 +1,3 @@
+# The "ansi" theme uses the terminal's own 16 colours, which every HyDE theme
+# repaints, so syntax highlighting follows the theme with no hook.
+--theme="ansi"
