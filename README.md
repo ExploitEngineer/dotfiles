@@ -34,7 +34,7 @@ dotfiles/
 ├── cli/        btop, cava, ...     fastfetch, htop, nvim's wallbash hook
 ├── git/        .gitconfig          git identity and global ignore
 ├── xdg/        mimeapps.list       default handlers, environment.d
-├── hyde/       .config/hyde        wallbash hooks (video wallpaper)
+├── hyde/       .config/hyde        wallbash hooks (video wallpaper, herdr theme)
 ├── dolphin/    dolphinrc           Dolphin tabs and panel layout
 ├── sddm/                           login screen theme + installer (system files, not stowed)
 └── patches/                        fixes for HyDE-owned program files
@@ -336,6 +336,22 @@ Prefer H.264 or HEVC anyway, both of which are real NVDEC here, as is VP9.
 
 Measured on a 1080p30 clip: `utilization.decoder` around 5 percent and roughly 417 MiB of VRAM.
 That VRAM figure is worth remembering on a 4 GB card.
+
+## herdr theme
+
+[herdr](https://herdr.dev) has no HyDE integration, only a `[theme.custom]` table in `~/.config/herdr/config.toml`.
+`hyde/.config/hyde/wallbash/scripts/herdr-theme.sh` fills that table from the active theme's `kitty.theme`, so herdr matches the terminal around it.
+It runs from `wallbash/always/herdr.dcol` on every theme and wallpaper change, and reloads a running herdr server, so no restart is needed.
+
+- Every HyDE theme ships a `kitty.theme` with literal colours, which is why that file is the source and not wallbash's `dcol_*` variables.
+  It is also read directly rather than through `~/.config/kitty/theme.conf`, which avoids racing the render that writes it.
+- Background, foreground and the red, green, yellow, blue, magenta and cyan ANSI colours map straight across.
+  The surface and overlay greys are mixed between background and foreground in the same steps Catppuccin uses, so light themes work without a special case.
+- Only the block between the `>>> wallbash >>>` and `<<< wallbash <<<` markers is managed.
+  The rest of `config.toml` is untouched.
+  A hand-written `[theme]` table outside the block makes the script stand down, because TOML forbids defining it twice.
+- Test without touching the real config:
+  `HERDR_CONFIG_PATH=/tmp/herdr.toml HYDE_THEME_DIR=~/.config/hyde/themes/Nier ~/.config/hyde/wallbash/scripts/herdr-theme.sh`
 
 ## Patches
 
