@@ -16,6 +16,7 @@ A package mirrors the path it targets under `$HOME`, so `hypr/.config/hypr/hyprl
 | `shell` | bash, zsh, fish |
 | `cli` | btop, cava, fastfetch, htop, lazygit, starship, bat |
 | `git` | git identity (opt-in, personal) |
+| `scripts` | helper scripts, not stow packages |
 | `xdg` | default applications, environment.d |
 | `hyde` | HyDE wallbash hooks and themes |
 | `dolphin` | Dolphin layout |
@@ -38,7 +39,7 @@ If a file is byte-identical to upstream, leave it out.
 2. Run the checks CI runs:
 
    ```sh
-   for f in install.sh uninstall.sh hyde/.config/hyde/wallbash/scripts/*.sh; do bash -n "$f"; done
+   for f in install.sh uninstall.sh scripts/*.sh hyde/.config/hyde/wallbash/scripts/*.sh; do bash -n "$f"; done
    ```
 
 3. Search your diff for anything personal: your name, email, home directory, API keys, tokens.

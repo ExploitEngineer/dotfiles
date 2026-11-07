@@ -17,7 +17,9 @@ The other stops every area screenshot asking for the region to be drawn twice, b
 
 HyDE ships both dunst and swaync and lets you pick one.
 dunst is the one in the core package list at `Scripts/pkg_core.lst`; swaync is an optional extra pulled in through `Scripts/dots-groups/extra.toml`.
-The ZBook uses dunst, and swaync is deliberately not installed.
+Until 2026-11-07 the ZBook used dunst and kept swaync masked.
+It now runs swaync, switched with `scripts/notification-daemon.sh`, see [notifications.md](notifications.md).
+The conflict below is why only one of them may be active.
 
 Having both installed is actively harmful, not merely redundant.
 Only one process can own the `org.freedesktop.Notifications` D-Bus name.

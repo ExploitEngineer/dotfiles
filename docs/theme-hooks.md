@@ -17,6 +17,7 @@ flowchart LR
     D --> T5[btop]
     D --> T6[fzf]
     D --> T7[eza]
+    D --> T8[swaync]
 ```
 
 ## What each hook writes
@@ -30,6 +31,7 @@ flowchart LR
 | btop | `~/.config/btop/themes/wallbash.theme` | live, btop receives `SIGUSR2` | never |
 | fzf | `~/.config/fzf/wallbash.opts`, loaded through `FZF_DEFAULT_OPTS_FILE` | every new fzf | you set `FZF_DEFAULT_OPTS_FILE` yourself |
 | eza | `~/.config/eza/theme.yml` | next eza | `theme.yml` is not the hook's own |
+| swaync | `~/.config/swaync/wallbash-style.css`, imported by `user-style.css` | live, swaync reloads its CSS | never, see [notifications](notifications.md) |
 
 A hook owns one generated file, so your own configuration is never edited.
 The generated files are listed in `.gitignore`, so they cannot end up in a commit when stow links a whole directory into `$HOME`.

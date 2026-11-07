@@ -20,9 +20,12 @@ It layers on top of HyDE and contains only what differs from HyDE's defaults, so
 ## Highlights
 
 - **One theme, everywhere.**
-  Switch theme or wallpaper and the desktop, the terminal and the CLI tools change together: waybar, rofi, kitty, dunst, neovim, tmux, lazygit, yazi, btop, fzf, eza, herdr and the login screen.
+  Switch theme or wallpaper and the desktop, the terminal and the CLI tools change together: waybar, rofi, kitty, swaync, neovim, tmux, lazygit, yazi, btop, fzf, eza, herdr and the login screen.
   [How the hooks work](docs/theme-hooks.md).
 - **37 complete themes**, each with its own wallpaper and window layout.
+- **Notifications with real design.**
+  A glass card with depth, an accent edge and a per-theme shape, on swaync.
+  [Details](docs/notifications.md).
 - **A login screen that follows the theme**, with five structurally different layouts.
   [Details](docs/login-screen.md).
 - **Video wallpapers** that need no keybind and keep theming working.
@@ -132,7 +135,7 @@ Each top-level directory is a Stow package that mirrors the path it targets unde
 | Package | Holds |
 |---|---|
 | `hypr` | Hyprland (Lua configuration), hyprsunset, pyprland |
-| `desktop` | waybar layout, browser flags |
+| `desktop` | waybar layout, browser flags, swaync entry point |
 | `terminal` | tmux |
 | `shell` | bash, zsh, fish, and the environment that points tools at their generated themes |
 | `cli` | btop, cava, fastfetch, htop, lazygit, starship, bat |
@@ -142,8 +145,9 @@ Each top-level directory is a Stow package that mirrors the path it targets unde
 | `git` | git identity (opt-in) |
 | `sddm/` | the login theme and its installer, system files that are not stowed |
 | `patches/` | fixes for files HyDE owns, see [docs/hyde-fixes.md](docs/hyde-fixes.md) |
+| `scripts/` | helpers, for now the notification daemon switch |
 
-kitty, rofi, dunst and wlogout need nothing here: HyDE's defaults and wallbash output already cover them.
+kitty, rofi and wlogout need nothing here: HyDE's defaults and wallbash output already cover them.
 
 ## Tools that follow the theme
 
@@ -156,6 +160,7 @@ kitty, rofi, dunst and wlogout need nothing here: HyDE's defaults and wallbash o
 | btop | hook writes a `wallbash` theme | live |
 | fzf | hook writes an options file | every new fzf |
 | eza | hook writes `theme.yml` | next run |
+| swaync | hook writes `wallbash-style.css` | live |
 | starship, bat, fastfetch, htop | use the terminal's ANSI colours, no hook | always |
 
 Here is the same hook on three themes:
@@ -174,6 +179,7 @@ The walkthrough, with a complete working example, is in [docs/theme-hooks.md](do
 | Page | Covers |
 |---|---|
 | [docs/theme-hooks.md](docs/theme-hooks.md) | How tools follow the theme, and how to write a hook |
+| [docs/notifications.md](docs/notifications.md) | The swaync design, the per-theme shapes, switching daemons |
 | [docs/login-screen.md](docs/login-screen.md) | The SDDM theme, how it syncs, what was verified |
 | [docs/video-wallpapers.md](docs/video-wallpapers.md) | Playing a video as the wallpaper with theming intact |
 | [docs/dolphin.md](docs/dolphin.md) | The Dolphin layout and why two files differ from HyDE's |

@@ -114,3 +114,5 @@ Thumbs.db
 # Python bytecode
 __pycache__/
 **/.config/eza/theme.yml
+**/.config/swaync/wallbash-style.css
+**/.config/swaync/theme.css
