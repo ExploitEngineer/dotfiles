@@ -24,7 +24,7 @@ jobs:
             python3 -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$f"
           done
           # Hooks embed their Python in a heredoc, which bash -n does not check.
-          for f in hyde/.config/hyde/wallbash/scripts/*-theme.sh; do
+          for f in hyde/.config/hyde/wallbash/scripts/*-theme.sh hyde/.config/hyde/wallbash/scripts/*-style.sh; do
             sed -n "/<<'PY'/,/^PY\$/p" "$f" | sed '1d;$d' | python3 -c "import ast,sys; ast.parse(sys.stdin.read())"
           done
 
@@ -53,7 +53,7 @@ jobs:
           done
           export PATH="$HOME/bin:$PATH"
           export HYDE_THEME_DIR="$GITHUB_WORKSPACE/hyde/.config/hyde/themes/Catppuccin Mocha"
-          for s in hyde/.config/hyde/wallbash/scripts/*-theme.sh; do
+          for s in hyde/.config/hyde/wallbash/scripts/*-theme.sh hyde/.config/hyde/wallbash/scripts/*-style.sh; do
             echo "run $s"
             "$s"
           done
